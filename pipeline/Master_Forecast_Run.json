@@ -205,7 +205,7 @@
 					"storedProcedureParameters": {
 						"PlookbackFromWeek": {
 							"value": {
-								"value": "@activity('GetForecastConfigs').output.value[0].FromWeek",
+								"value": "@activity('GetForecastConfigs').output.value[0].Lookback_Window",
 								"type": "Expression"
 							},
 							"type": "Int32"

@@ -1,0 +1,6 @@
+{
+	"name": "integration-runtime-facebook-dp-new",
+	"properties": {
+		"type": "SelfHosted"
+	}
+}

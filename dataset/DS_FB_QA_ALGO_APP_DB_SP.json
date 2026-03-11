@@ -1,0 +1,13 @@
+{
+	"name": "DS_FB_QA_ALGO_APP_DB_SP",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "SqlServer_Web_Facebook_AlgoApp_Production",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "SqlServerTable",
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

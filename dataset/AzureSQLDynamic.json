@@ -1,0 +1,64 @@
+{
+	"name": "AzureSQLDynamic",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureSQLparameterizedLink",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"server": {
+					"value": "@dataset().server",
+					"type": "Expression"
+				},
+				"DB": {
+					"value": "@dataset().DB",
+					"type": "Expression"
+				},
+				"user": {
+					"value": "@dataset().User",
+					"type": "Expression"
+				},
+				"password": {
+					"value": "@dataset().Password",
+					"type": "Expression"
+				}
+			}
+		},
+		"parameters": {
+			"server": {
+				"type": "string"
+			},
+			"schema": {
+				"type": "string"
+			},
+			"table": {
+				"type": "string"
+			},
+			"DB": {
+				"type": "string"
+			},
+			"User": {
+				"type": "string"
+			},
+			"Password": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "ForecastEngineV2"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": {
+				"value": "@dataset().schema",
+				"type": "Expression"
+			},
+			"table": {
+				"value": "@dataset().table",
+				"type": "Expression"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

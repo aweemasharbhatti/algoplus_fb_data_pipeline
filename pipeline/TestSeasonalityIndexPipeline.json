@@ -1,0 +1,618 @@
+{
+	"name": "TestSeasonalityIndexPipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "Copy From SQL",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "DelimitedTextSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextWriteSettings",
+							"quoteAllText": true,
+							"fileExtension": ".txt"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "AzureSqlDBDEV",
+						"type": "DatasetReference",
+						"parameters": {
+							"schema": {
+								"value": "@pipeline().parameters.source_schema",
+								"type": "Expression"
+							},
+							"table": {
+								"value": "@pipeline().parameters.source_table",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "CSVSinkDatasetDev",
+						"type": "DatasetReference",
+						"parameters": {
+							"folder": {
+								"value": "@pipeline().parameters.output_folder",
+								"type": "Expression"
+							},
+							"file": {
+								"value": "@pipeline().parameters.output_file",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "Copy To SQL Dim1",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Notebook_Dim_1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"wildcardFolderPath": {
+								"value": "@concat(pipeline().parameters.target_folder,'/',pipeline().parameters.target_file,'_',replace(variables('Dimension1'),',','_'))",
+								"type": "Expression"
+							},
+							"wildcardFileName": "*.csv",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"sink": {
+						"type": "AzureSqlSink",
+						"tableOption": "autoCreate",
+						"disableMetricsCollection": false
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "CSVSinkDatasetDev",
+						"type": "DatasetReference",
+						"parameters": {
+							"folder": {
+								"value": "@pipeline().parameters.target_folder",
+								"type": "Expression"
+							},
+							"file": {
+								"value": "@pipeline().parameters.target_file",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "AzureSqlDBDEV",
+						"type": "DatasetReference",
+						"parameters": {
+							"schema": {
+								"value": "@pipeline().parameters.target_schema",
+								"type": "Expression"
+							},
+							"table": {
+								"value": "@pipeline().parameters.target_table",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "Notebook_Dim_1",
+				"type": "DatabricksNotebook",
+				"dependsOn": [
+					{
+						"activity": "Copy From SQL",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebookPath": "/Users/muddaser.talal@algo.com/seasonalityIndex/SeasonalityIndexComputation",
+					"baseParameters": {
+						"input_file_name": {
+							"value": "@pipeline().parameters.output_file",
+							"type": "Expression"
+						},
+						"source_file_path": {
+							"value": "@pipeline().parameters.output_folder",
+							"type": "Expression"
+						},
+						"target_file": {
+							"value": "@pipeline().parameters.target_file",
+							"type": "Expression"
+						},
+						"target_folder": {
+							"value": "@pipeline().parameters.target_folder",
+							"type": "Expression"
+						},
+						"Dimensions": {
+							"value": "@variables('Dimension1')",
+							"type": "Expression"
+						},
+						"end_date": {
+							"value": "@pipeline().parameters.end_date",
+							"type": "Expression"
+						},
+						"BatchID": {
+							"value": "@pipeline().parameters.batchid",
+							"type": "Expression"
+						},
+						"week_window": {
+							"value": "@pipeline().parameters.week_window",
+							"type": "Expression"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureDatabrickslinkserviceUpdated",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"clusterType": {
+							"value": "@pipeline().parameters.cluster_type",
+							"type": "Expression"
+						},
+						"workerNode": {
+							"value": "@pipeline().parameters.worker_node",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Notebook_Dim_2",
+				"type": "DatabricksNotebook",
+				"dependsOn": [
+					{
+						"activity": "Copy From SQL",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebookPath": "/Users/muddaser.talal@algo.com/seasonalityIndex/SeasonalityIndexComputation",
+					"baseParameters": {
+						"input_file_name": {
+							"value": "@pipeline().parameters.output_file",
+							"type": "Expression"
+						},
+						"source_file_path": {
+							"value": "@pipeline().parameters.output_folder",
+							"type": "Expression"
+						},
+						"target_file": {
+							"value": "@pipeline().parameters.target_file",
+							"type": "Expression"
+						},
+						"target_folder": {
+							"value": "@pipeline().parameters.target_folder",
+							"type": "Expression"
+						},
+						"Dimensions": {
+							"value": "@variables('Dimension2')",
+							"type": "Expression"
+						},
+						"end_date": {
+							"value": "@pipeline().parameters.end_date",
+							"type": "Expression"
+						},
+						"BatchID": {
+							"value": "@pipeline().parameters.batchid",
+							"type": "Expression"
+						},
+						"week_window": {
+							"value": "@pipeline().parameters.week_window",
+							"type": "Expression"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureDatabrickslinkserviceUpdated",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"clusterType": {
+							"value": "@pipeline().parameters.cluster_type",
+							"type": "Expression"
+						},
+						"workerNode": {
+							"value": "@pipeline().parameters.worker_node",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Copy To SQL Dim2",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Notebook_Dim_2",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"wildcardFolderPath": {
+								"value": "@concat(pipeline().parameters.target_folder,'/',pipeline().parameters.target_file,'_',replace(variables('Dimension2'),',','_'))",
+								"type": "Expression"
+							},
+							"wildcardFileName": "*.csv",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"sink": {
+						"type": "AzureSqlSink",
+						"tableOption": "autoCreate",
+						"disableMetricsCollection": false
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "CSVSinkDatasetDev",
+						"type": "DatasetReference",
+						"parameters": {
+							"folder": {
+								"value": "@pipeline().parameters.target_folder",
+								"type": "Expression"
+							},
+							"file": {
+								"value": "@pipeline().parameters.target_file",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "AzureSqlDBDEV",
+						"type": "DatasetReference",
+						"parameters": {
+							"schema": {
+								"value": "@pipeline().parameters.target_schema",
+								"type": "Expression"
+							},
+							"table": {
+								"value": "@pipeline().parameters.target_table",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "Notebook_Dim_3",
+				"type": "DatabricksNotebook",
+				"dependsOn": [
+					{
+						"activity": "Copy From SQL",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebookPath": "/Users/muddaser.talal@algo.com/seasonalityIndex/SeasonalityIndexComputation",
+					"baseParameters": {
+						"input_file_name": {
+							"value": "@pipeline().parameters.output_file",
+							"type": "Expression"
+						},
+						"source_file_path": {
+							"value": "@pipeline().parameters.output_folder",
+							"type": "Expression"
+						},
+						"target_file": {
+							"value": "@pipeline().parameters.target_file",
+							"type": "Expression"
+						},
+						"target_folder": {
+							"value": "@pipeline().parameters.target_folder",
+							"type": "Expression"
+						},
+						"Dimensions": {
+							"value": "@variables('Dimension3')",
+							"type": "Expression"
+						},
+						"end_date": {
+							"value": "@pipeline().parameters.end_date",
+							"type": "Expression"
+						},
+						"BatchID": {
+							"value": "@pipeline().parameters.batchid",
+							"type": "Expression"
+						},
+						"week_window": {
+							"value": "@pipeline().parameters.week_window",
+							"type": "Expression"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureDatabrickslinkserviceUpdated",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"clusterType": {
+							"value": "@pipeline().parameters.cluster_type",
+							"type": "Expression"
+						},
+						"workerNode": {
+							"value": "@pipeline().parameters.worker_node",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Copy To SQL Dim3",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Notebook_Dim_3",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"wildcardFolderPath": {
+								"value": "@concat(pipeline().parameters.target_folder,'/',pipeline().parameters.target_file,'_',replace(variables('Dimension3'),',','_'))",
+								"type": "Expression"
+							},
+							"wildcardFileName": "*.csv",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"sink": {
+						"type": "AzureSqlSink",
+						"tableOption": "autoCreate",
+						"disableMetricsCollection": false
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "CSVSinkDatasetDev",
+						"type": "DatasetReference",
+						"parameters": {
+							"folder": {
+								"value": "@pipeline().parameters.target_folder",
+								"type": "Expression"
+							},
+							"file": {
+								"value": "@pipeline().parameters.target_file",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "AzureSqlDBDEV",
+						"type": "DatasetReference",
+						"parameters": {
+							"schema": {
+								"value": "@pipeline().parameters.target_schema",
+								"type": "Expression"
+							},
+							"table": {
+								"value": "@pipeline().parameters.target_table",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			}
+		],
+		"parameters": {
+			"source_table": {
+				"type": "string",
+				"defaultValue": "V_fact_sale"
+			},
+			"source_schema": {
+				"type": "string",
+				"defaultValue": "dbo"
+			},
+			"output_folder": {
+				"type": "string",
+				"defaultValue": "SourceDataFix"
+			},
+			"output_file": {
+				"type": "string",
+				"defaultValue": "factsale.csv"
+			},
+			"target_folder": {
+				"type": "string",
+				"defaultValue": "SeasonalityIndex/output"
+			},
+			"target_file": {
+				"type": "string",
+				"defaultValue": "SeasonalityIndex.csv"
+			},
+			"target_table": {
+				"type": "string",
+				"defaultValue": "SeasonalityIndextemp"
+			},
+			"target_schema": {
+				"type": "string",
+				"defaultValue": "dbo"
+			},
+			"cluster_type": {
+				"type": "string",
+				"defaultValue": "Standard_DS3_v2"
+			},
+			"worker_node": {
+				"type": "string",
+				"defaultValue": "2"
+			},
+			"end_date": {
+				"type": "string",
+				"defaultValue": "2021-02-03"
+			},
+			"batchid": {
+				"type": "string",
+				"defaultValue": "2"
+			},
+			"week_window": {
+				"type": "string",
+				"defaultValue": "52"
+			}
+		},
+		"variables": {
+			"Dimension1": {
+				"type": "String",
+				"defaultValue": "item_account_key"
+			},
+			"Dimension2": {
+				"type": "String",
+				"defaultValue": "item_key,country_code"
+			},
+			"Dimension3": {
+				"type": "String",
+				"defaultValue": "item_key"
+			}
+		},
+		"folder": {
+			"name": "MuddaserTalal"
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-02-14T08:37:06Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

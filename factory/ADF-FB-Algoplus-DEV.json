@@ -1,0 +1,9 @@
+{
+	"name": "ADF-FB-Algoplus-DEV",
+	"location": "westus2",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "60defc95-fcd0-4bf3-a8d0-885874d7ce6d",
+		"tenantId": "21385633-c89a-4e6d-8c07-6776cb3abed3"
+	}
+}

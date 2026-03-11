@@ -1,0 +1,808 @@
+{
+	"name": "item-mapping-pipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "If Condition1",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "Lookup1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@greaterOrEquals( activity('Lookup1').output.count,1)",
+						"type": "Expression"
+					},
+					"ifFalseActivities": [
+						{
+							"name": "Execute OutlierManager_1",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "TestOutlierPipeline",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true
+							}
+						}
+					],
+					"ifTrueActivities": [
+						{
+							"name": "Copy dim item From SQL",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "sp_deleteoutliersdataitem_key_retailer_key",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "AzureSqlSource",
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"sink": {
+									"type": "DelimitedTextSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "DelimitedTextWriteSettings",
+										"quoteAllText": true,
+										"fileExtension": ".txt"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "AzureSqlDBDEV",
+									"type": "DatasetReference",
+									"parameters": {
+										"schema": {
+											"value": "@pipeline().parameters.dim_item_schema",
+											"type": "Expression"
+										},
+										"table": {
+											"value": "@pipeline().parameters.dim_item_table",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "CSVSinkDatasetDev",
+									"type": "DatasetReference",
+									"parameters": {
+										"folder": {
+											"value": "@pipeline().parameters.target_folder",
+											"type": "Expression"
+										},
+										"file": {
+											"value": "@pipeline().parameters.dim_item_table",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "Copy sales From SQL",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "Copy dim item From SQL",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "AzureSqlSource",
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"sink": {
+									"type": "DelimitedTextSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "DelimitedTextWriteSettings",
+										"quoteAllText": true,
+										"fileExtension": ".txt"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "AzureSqlDBDEV",
+									"type": "DatasetReference",
+									"parameters": {
+										"schema": {
+											"value": "@pipeline().parameters.fact_sale_table_schema",
+											"type": "Expression"
+										},
+										"table": {
+											"value": "@pipeline().parameters.fact_sale_table",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "CSVSinkDatasetDev",
+									"type": "DatasetReference",
+									"parameters": {
+										"folder": {
+											"value": "@pipeline().parameters.target_folder",
+											"type": "Expression"
+										},
+										"file": {
+											"value": "@pipeline().parameters.fact_sale_table",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "Notebook_itemmapping",
+							"type": "DatabricksNotebook",
+							"dependsOn": [
+								{
+									"activity": "Copy mappeditem From SQL",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"notebookPath": "/Users/muddaser.talal@algo.com//ItemMapping/itemmapping",
+								"baseParameters": {
+									"dim_item_file": {
+										"value": "@pipeline().parameters.dim_item_table",
+										"type": "Expression"
+									},
+									"fact_sale_file": {
+										"value": "@pipeline().parameters.fact_sale_table",
+										"type": "Expression"
+									},
+									"forecastskuitem_file": {
+										"value": "@pipeline().parameters.forecastskuitem_table",
+										"type": "Expression"
+									},
+									"mappeditem_file": {
+										"value": "@pipeline().parameters.mappeditem_table",
+										"type": "Expression"
+									},
+									"source_folder": {
+										"value": "@pipeline().parameters.target_folder",
+										"type": "Expression"
+									},
+									"outputpath": {
+										"value": "@pipeline().parameters.outputpath",
+										"type": "Expression"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "AzureDatabrickslinkserviceUpdated",
+								"type": "LinkedServiceReference",
+								"parameters": {
+									"clusterType": {
+										"value": "@pipeline().parameters.cluster_type",
+										"type": "Expression"
+									},
+									"workerNode": {
+										"value": "@pipeline().parameters.worker_node",
+										"type": "Expression"
+									}
+								}
+							}
+						},
+						{
+							"name": "Copy mappeditem From SQL",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "Copy sales From SQL",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "AzureSqlSource",
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"sink": {
+									"type": "DelimitedTextSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "DelimitedTextWriteSettings",
+										"quoteAllText": true,
+										"fileExtension": ".txt"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "AzureSqlDBDEV",
+									"type": "DatasetReference",
+									"parameters": {
+										"schema": {
+											"value": "@pipeline().parameters.mappeditem_schema",
+											"type": "Expression"
+										},
+										"table": {
+											"value": "@pipeline().parameters.mappeditem_table",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "CSVSinkDatasetDev",
+									"type": "DatasetReference",
+									"parameters": {
+										"folder": {
+											"value": "@pipeline().parameters.target_folder",
+											"type": "Expression"
+										},
+										"file": {
+											"value": "@pipeline().parameters.mappeditem_table",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "Copy output to SQL",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "Notebook_itemmapping",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "DelimitedTextSource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"wildcardFolderPath": {
+											"value": "@concat(pipeline().parameters.target_folder,'/',pipeline().parameters.outputpath)",
+											"type": "Expression"
+										},
+										"wildcardFileName": "*.csv",
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "DelimitedTextReadSettings"
+									}
+								},
+								"sink": {
+									"type": "AzureSqlSink",
+									"writeBehavior": "insert",
+									"sqlWriterUseTableLock": false,
+									"disableMetricsCollection": false
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "CSVSinkDatasetDev",
+									"type": "DatasetReference",
+									"parameters": {
+										"folder": {
+											"value": "@pipeline().parameters.target_folder",
+											"type": "Expression"
+										},
+										"file": {
+											"value": "@pipeline().parameters.outputpath",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "AzureSqlDBDEV",
+									"type": "DatasetReference",
+									"parameters": {
+										"schema": {
+											"value": "@pipeline().parameters.target_schema",
+											"type": "Expression"
+										},
+										"table": {
+											"value": "@pipeline().parameters.target_table",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "Delete Datalake file",
+							"type": "Delete",
+							"dependsOn": [
+								{
+									"activity": "Copy output to SQL",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "DeleteCSVSinkDatasetDev",
+									"type": "DatasetReference",
+									"parameters": {
+										"folder": {
+											"value": "@pipeline().parameters.target_folder",
+											"type": "Expression"
+										}
+									}
+								},
+								"enableLogging": false,
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								}
+							}
+						},
+						{
+							"name": "UpdateSyncStatusCompleted",
+							"type": "SqlServerStoredProcedure",
+							"dependsOn": [
+								{
+									"activity": "Delete Datalake file",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"storedProcedureName": "[engine].[UpdateSyncStatus]",
+								"storedProcedureParameters": {
+									"PCurrentStatus": {
+										"value": "inprogress",
+										"type": "String"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "sqlserver_dataplatform_general_dev",
+								"type": "LinkedServiceReference"
+							}
+						},
+						{
+							"name": "UpdateSyncStatusInprogress",
+							"type": "SqlServerStoredProcedure",
+							"dependsOn": [
+								{
+									"activity": "Copy v_forecastskuitem_retailer_key",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"storedProcedureName": "[engine].[UpdateSyncStatus]",
+								"storedProcedureParameters": {
+									"PCurrentStatus": {
+										"value": "'modified','inserted'",
+										"type": "String"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "sqlserver_dataplatform_general_dev",
+								"type": "LinkedServiceReference"
+							}
+						},
+						{
+							"name": "Copy v_forecastskuitem_retailer_key",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "AzureSqlSource",
+									"sqlReaderQuery": {
+										"value": "@concat(' select * from ',pipeline().parameters.forecastskuitem_schema,'.',pipeline().parameters.forecastskuitem_table,' where syncstatus in (''Inserted'',''Modified'')')",
+										"type": "Expression"
+									},
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"sink": {
+									"type": "DelimitedTextSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "DelimitedTextWriteSettings",
+										"quoteAllText": true,
+										"fileExtension": ".txt"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "AzureSqlDBDEV",
+									"type": "DatasetReference",
+									"parameters": {
+										"schema": {
+											"value": "@pipeline().parameters.forecastskuitem_schema",
+											"type": "Expression"
+										},
+										"table": {
+											"value": "@pipeline().parameters.forecastskuitem_table",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "CSVSinkDatasetDev",
+									"type": "DatasetReference",
+									"parameters": {
+										"folder": {
+											"value": "@pipeline().parameters.target_folder",
+											"type": "Expression"
+										},
+										"file": {
+											"value": "@pipeline().parameters.forecastskuitem_table",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "Execute OutlierManager",
+							"type": "ExecutePipeline",
+							"dependsOn": [
+								{
+									"activity": "UpdateSyncStatusCompleted",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "TestOutlierPipeline",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true
+							}
+						},
+						{
+							"name": "spDeleteMappedRecord",
+							"type": "SqlServerStoredProcedure",
+							"dependsOn": [
+								{
+									"activity": "UpdateSyncStatusInprogress",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"storedProcedureName": "[engine].[spdeletemappedrecord]"
+							},
+							"linkedServiceName": {
+								"referenceName": "sqlserver_dataplatform_general_dev",
+								"type": "LinkedServiceReference"
+							}
+						},
+						{
+							"name": "sp_deleteoutliersdataitem_key_retailer_key",
+							"type": "SqlServerStoredProcedure",
+							"dependsOn": [
+								{
+									"activity": "spDeleteMappedRecord",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"storedProcedureName": "[engine].[sp_deleteoutliersdataitem_key_retailer_key]",
+								"storedProcedureParameters": {
+									"is_mapped": {
+										"value": {
+											"value": "@pipeline().parameters.mapping_flg",
+											"type": "Expression"
+										},
+										"type": "Int32"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "sqlserver_dataplatform_general_dev",
+								"type": "LinkedServiceReference"
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Lookup1",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": {
+							"value": "@concat(' select * from ', pipeline().parameters.forecastskuitem_schema,'.',pipeline().parameters.forecastskuitem_table,' where syncstatus in (''Inserted'',''Modified'')')",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "AzureSqlDBDEV",
+						"type": "DatasetReference",
+						"parameters": {
+							"schema": {
+								"value": "@pipeline().parameters.forecastskuitem_schema",
+								"type": "Expression"
+							},
+							"table": {
+								"value": "@pipeline().parameters.forecastskuitem_table",
+								"type": "Expression"
+							}
+						}
+					},
+					"firstRowOnly": false
+				}
+			}
+		],
+		"parameters": {
+			"target_folder": {
+				"type": "string",
+				"defaultValue": "mapping/output"
+			},
+			"target_file": {
+				"type": "string",
+				"defaultValue": "FactsaleOut.csv"
+			},
+			"target_table": {
+				"type": "string",
+				"defaultValue": "v_fact_sale_mapping"
+			},
+			"target_schema": {
+				"type": "string",
+				"defaultValue": "engine"
+			},
+			"cluster_type": {
+				"type": "string",
+				"defaultValue": "Standard_DS3_v2"
+			},
+			"worker_node": {
+				"type": "string",
+				"defaultValue": "2"
+			},
+			"fact_sale_table": {
+				"type": "string",
+				"defaultValue": "v_fact_sale_depromo"
+			},
+			"fact_sale_table_schema": {
+				"type": "string",
+				"defaultValue": "engine"
+			},
+			"dim_item_schema": {
+				"type": "string",
+				"defaultValue": "dbo"
+			},
+			"dim_item_table": {
+				"type": "string",
+				"defaultValue": "dim_item"
+			},
+			"forecastskuitem_table": {
+				"type": "string",
+				"defaultValue": "v_forecastskuitem_retailer_key"
+			},
+			"forecastskuitem_schema": {
+				"type": "string",
+				"defaultValue": "engine"
+			},
+			"mappeditem_table": {
+				"type": "string",
+				"defaultValue": "v_mappeditem_retailer_key"
+			},
+			"mappeditem_schema": {
+				"type": "string",
+				"defaultValue": "engine"
+			},
+			"outputpath": {
+				"type": "string",
+				"defaultValue": "mappingoutput"
+			},
+			"mapping_flg": {
+				"type": "string",
+				"defaultValue": "1"
+			}
+		},
+		"folder": {
+			"name": "MuddaserTalal"
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-05-11T10:09:03Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

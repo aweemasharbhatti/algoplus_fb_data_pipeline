@@ -1,0 +1,235 @@
+{
+	"name": "AzureSqlSecondDB",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureSqlDatabaseSecondDb",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "seasonality_type",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "toolbox_forecast_type",
+				"type": "varchar"
+			},
+			{
+				"name": "customer_code",
+				"type": "varchar"
+			},
+			{
+				"name": "item_code",
+				"type": "varchar"
+			},
+			{
+				"name": "week_date",
+				"type": "date"
+			},
+			{
+				"name": "week_number",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "quantity",
+				"type": "varchar"
+			},
+			{
+				"name": "seasonal_factor",
+				"type": "varchar"
+			},
+			{
+				"name": "promotional_factor",
+				"type": "varchar"
+			},
+			{
+				"name": "run_date",
+				"type": "date"
+			},
+			{
+				"name": "wma_use_percent",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "seasonality_curve_percent",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "tema_use_percent",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "dema_use_percent",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "forecast_type",
+				"type": "varchar"
+			},
+			{
+				"name": "placement",
+				"type": "varchar"
+			},
+			{
+				"name": "mfoq_look_forward_window",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "mfoq_use_percent",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "on_order_quantity",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "amazon_pos_forecast",
+				"type": "varchar"
+			},
+			{
+				"name": "vendor_central_pos_forecast",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "forecast_input",
+				"type": "varchar"
+			},
+			{
+				"name": "future_promotional_factors",
+				"type": "varchar"
+			},
+			{
+				"name": "future_promo_factor_dates",
+				"type": "varchar"
+			},
+			{
+				"name": "in_transit_quantity",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "lookback_window",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "ema_use_percent",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "shipment_blend_percentage",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "promotionality_curve_percent",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "item_type",
+				"type": "varchar"
+			},
+			{
+				"name": "future_seasonal_factors",
+				"type": "varchar"
+			},
+			{
+				"name": "category",
+				"type": "varchar"
+			},
+			{
+				"name": "sma_use_percent",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "pos_blend_percentage",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "wma_weights",
+				"type": "varchar"
+			},
+			{
+				"name": "release_type",
+				"type": "varchar"
+			},
+			{
+				"name": "de_promo_quantity",
+				"type": "varchar"
+			},
+			{
+				"name": "de_promo_and_de_season_quantity",
+				"type": "varchar"
+			},
+			{
+				"name": "sma_forecast",
+				"type": "varchar"
+			},
+			{
+				"name": "wma_forecast",
+				"type": "varchar"
+			},
+			{
+				"name": "ema_forecast",
+				"type": "varchar"
+			},
+			{
+				"name": "dema_forecast",
+				"type": "varchar"
+			},
+			{
+				"name": "tema_forecast",
+				"type": "varchar"
+			},
+			{
+				"name": "mfoq_forecast",
+				"type": "varchar"
+			},
+			{
+				"name": "combined_and_scaled_forecast",
+				"type": "varchar"
+			},
+			{
+				"name": "merged_forecast",
+				"type": "varchar"
+			},
+			{
+				"name": "reseasonalized_forecast",
+				"type": "varchar"
+			},
+			{
+				"name": "reseason_and_repromo_forecast",
+				"type": "varchar"
+			},
+			{
+				"name": "algo_batch_id",
+				"type": "varchar"
+			},
+			{
+				"name": "algo_created_date",
+				"type": "date"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "fcst_pos_forecast_data"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

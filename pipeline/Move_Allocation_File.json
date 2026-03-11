@@ -1,0 +1,56 @@
+{
+	"name": "Move_Allocation_File",
+	"properties": {
+		"activities": [
+			{
+				"name": "Delete Files From Storage Account",
+				"type": "Delete",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "DS_BLOB_ARCHIVE_CSV",
+						"type": "DatasetReference",
+						"parameters": {
+							"FileName": {
+								"value": "@pipeline().parameters.FileName",
+								"type": "Expression"
+							},
+							"FolderPath": {
+								"value": "@concat('Input/',formatDateTime(utcnow(),'yyyy-MM-dd'))",
+								"type": "Expression"
+							},
+							"deli_Comma": ",",
+							"deli_Tab": "\t"
+						}
+					},
+					"enableLogging": false,
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					}
+				}
+			}
+		],
+		"parameters": {
+			"FileName": {
+				"type": "string",
+				"defaultValue": "facebook_e2open.BIN.allocation_20221129.tsv"
+			}
+		},
+		"folder": {
+			"name": "Facebook Pipelines/Move Allocation File"
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-12-07T10:03:43Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

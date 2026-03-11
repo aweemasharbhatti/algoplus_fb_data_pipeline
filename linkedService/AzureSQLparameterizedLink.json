@@ -1,0 +1,25 @@
+{
+	"name": "AzureSQLparameterizedLink",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"parameters": {
+			"server": {
+				"type": "String"
+			},
+			"DB": {
+				"type": "String"
+			},
+			"user": {
+				"type": "String"
+			},
+			"password": {
+				"type": "String"
+			}
+		},
+		"annotations": [],
+		"type": "AzureSqlDatabase",
+		"typeProperties": {
+			"connectionString": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=@{linkedService().server};Initial Catalog=@{linkedService().DB};User ID=@{linkedService().user};Password=@{linkedService().password}"
+		}
+	}
+}

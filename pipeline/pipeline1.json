@@ -1,0 +1,160 @@
+{
+	"name": "pipeline1",
+	"properties": {
+		"activities": [
+			{
+				"name": "Copy FB FORECAST MASTER from APP_copy1",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "SqlServerSink",
+						"writeBehavior": "insert",
+						"sqlWriterUseTableLock": true,
+						"tableOption": "autoCreate",
+						"disableMetricsCollection": false
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "item_key",
+									"type": "String",
+									"physicalType": "nvarchar"
+								},
+								"sink": {
+									"name": "ITEM_KEY",
+									"physicalType": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "Retailer_Key",
+									"type": "String",
+									"physicalType": "nvarchar"
+								},
+								"sink": {
+									"name": "RETAILER_KEY",
+									"physicalType": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "MeasureName",
+									"type": "String",
+									"physicalType": "nvarchar"
+								},
+								"sink": {
+									"name": "MEASURE_NAME",
+									"physicalType": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "MeasureId",
+									"type": "Int64",
+									"physicalType": "bigint"
+								},
+								"sink": {
+									"name": "MEASURE_ID",
+									"physicalType": "Int64"
+								}
+							},
+							{
+								"source": {
+									"name": "Forecast_Value",
+									"type": "Decimal",
+									"physicalType": "decimal",
+									"scale": 4,
+									"precision": 18
+								},
+								"sink": {
+									"name": "FORECAST_VALUE",
+									"physicalType": "Decimal"
+								}
+							},
+							{
+								"source": {
+									"name": "weekEndDate",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								},
+								"sink": {
+									"name": "WEEK_END_DATE",
+									"physicalType": "DateTime"
+								}
+							},
+							{
+								"source": {
+									"name": "SnapShotDate",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								},
+								"sink": {
+									"name": "SNAP_SHOT_DATE",
+									"physicalType": "DateTime"
+								}
+							},
+							{
+								"source": {
+									"name": "ModifiedDate",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								},
+								"sink": {
+									"name": "MODIFIED_DATE",
+									"physicalType": "DateTime"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_FB_PROD_ALGO_APP_DB",
+						"type": "DatasetReference",
+						"parameters": {
+							"TableName": "V_FORECAST_HISTORY"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_ALGO_PLUS_FB_EDW_DEV_LAND",
+						"type": "DatasetReference",
+						"parameters": {
+							"SchemaName": "land",
+							"TableName": "FB_Forecast_HISTORY_APP"
+						}
+					}
+				]
+			}
+		],
+		"folder": {
+			"name": "Test"
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-11-07T11:26:11Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

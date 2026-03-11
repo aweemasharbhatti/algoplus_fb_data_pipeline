@@ -1,0 +1,279 @@
+{
+	"name": "main_pipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "missing data fill",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "TestMissingDataFillPipeLine",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"source_folder": {
+							"value": "@pipeline().parameters.depromo_source_folder",
+							"type": "Expression"
+						},
+						"source_file": {
+							"value": "@pipeline().parameters.depromo_source_file",
+							"type": "Expression"
+						},
+						"target_folder": {
+							"value": "@pipeline().parameters.depromo_target_folder",
+							"type": "Expression"
+						},
+						"target_file": {
+							"value": "@pipeline().parameters.depromo_target_file",
+							"type": "Expression"
+						},
+						"target_table": {
+							"value": "@pipeline().parameters.depromo_target_table",
+							"type": "Expression"
+						},
+						"target_schema": {
+							"value": "@pipeline().parameters.depromo_target_schema",
+							"type": "Expression"
+						},
+						"cluster_type": {
+							"value": "@pipeline().parameters.depromo_cluster_type",
+							"type": "Expression"
+						},
+						"worker_node": {
+							"value": "@pipeline().parameters.depromo_worker_node",
+							"type": "Expression"
+						},
+						"depromo_table": {
+							"value": "@pipeline().parameters.depromo_depromo_table",
+							"type": "Expression"
+						},
+						"source_schema": {
+							"value": "@pipeline().parameters.depromo_source_schema",
+							"type": "Expression"
+						},
+						"holiday_perct": "70"
+					}
+				}
+			},
+			{
+				"name": "Outlier",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "missing data fill",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "TestOutlierPipeline",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"source_table": {
+							"value": "@pipeline().parameters.outlier_source_table",
+							"type": "Expression"
+						},
+						"source_schema": {
+							"value": "@pipeline().parameters.outlier_source_schema",
+							"type": "Expression"
+						},
+						"output_folder": {
+							"value": "@pipeline().parameters.outlier_output_folder",
+							"type": "Expression"
+						},
+						"output_file": {
+							"value": "@pipeline().parameters.outlier_target_file",
+							"type": "Expression"
+						},
+						"imputation_method": {
+							"value": "@pipeline().parameters.outlier_imputation_method",
+							"type": "Expression"
+						},
+						"target_folder": {
+							"value": "@pipeline().parameters.outlier_target_folder",
+							"type": "Expression"
+						},
+						"target_file": {
+							"value": "@pipeline().parameters.outlier_target_file",
+							"type": "Expression"
+						},
+						"target_table": {
+							"value": "@pipeline().parameters.outlier_target_table",
+							"type": "Expression"
+						},
+						"target_schema": {
+							"value": "@pipeline().parameters.outlier_target_schema",
+							"type": "Expression"
+						},
+						"cluster_type": {
+							"value": "@pipeline().parameters.outlier_cluster_type",
+							"type": "Expression"
+						},
+						"worker_node": {
+							"value": "@pipeline().parameters.outlier_worker_node",
+							"type": "Expression"
+						},
+						"week_window": {
+							"value": "@pipeline().parameters.outlier_week_window",
+							"type": "Expression"
+						},
+						"last_month_start_date": {
+							"value": "@pipeline().parameters.outlier_last_month_start_date",
+							"type": "Expression"
+						},
+						"last_year_start_date": {
+							"value": "@pipeline().parameters.outlier_last_year_start_date",
+							"type": "Expression"
+						},
+						"week_start_date": {
+							"value": "@pipeline().parameters.outlier_week_start_date",
+							"type": "Expression"
+						},
+						"load_option": {
+							"value": "@pipeline().parameters.outlier_load_option",
+							"type": "Expression"
+						},
+						"mapping_flg": {
+							"value": "@pipeline().parameters.outlier_mapping_flg",
+							"type": "Expression"
+						}
+					}
+				}
+			}
+		],
+		"parameters": {
+			"depromo_source_folder": {
+				"type": "string",
+				"defaultValue": "Factsale"
+			},
+			"depromo_source_file": {
+				"type": "string",
+				"defaultValue": "Factsale.csv"
+			},
+			"depromo_target_folder": {
+				"type": "string",
+				"defaultValue": "Factsale/output"
+			},
+			"depromo_target_file": {
+				"type": "string",
+				"defaultValue": "FactsaleOut.csv"
+			},
+			"depromo_target_table": {
+				"type": "string",
+				"defaultValue": "v_fact_sale_depromo"
+			},
+			"depromo_target_schema": {
+				"type": "string",
+				"defaultValue": "engine"
+			},
+			"depromo_cluster_type": {
+				"type": "string",
+				"defaultValue": "Standard_DS3_v2"
+			},
+			"depromo_worker_node": {
+				"type": "string",
+				"defaultValue": "2"
+			},
+			"depromo_depromo_table": {
+				"type": "string",
+				"defaultValue": "v_fact_sale_depromo_raw"
+			},
+			"depromo_source_schema": {
+				"type": "string",
+				"defaultValue": "engine"
+			},
+			"depromo_holiday_perct": {
+				"type": "string",
+				"defaultValue": "180"
+			},
+			"outlier_source_table": {
+				"type": "string",
+				"defaultValue": "v_fact_sale_updated"
+			},
+			"outlier_source_schema": {
+				"type": "string",
+				"defaultValue": "engine"
+			},
+			"outlier_output_folder": {
+				"type": "string",
+				"defaultValue": "SourceDataFix"
+			},
+			"outlier_output_file": {
+				"type": "string",
+				"defaultValue": "factsale.csv"
+			},
+			"outlier_imputation_method": {
+				"type": "string",
+				"defaultValue": "mean"
+			},
+			"outlier_target_folder": {
+				"type": "string",
+				"defaultValue": "Ouliers/output"
+			},
+			"outlier_target_file": {
+				"type": "string",
+				"defaultValue": "factsale.csv"
+			},
+			"outlier_target_table": {
+				"type": "string",
+				"defaultValue": "outliers"
+			},
+			"outlier_target_schema": {
+				"type": "string",
+				"defaultValue": "engine"
+			},
+			"outlier_cluster_type": {
+				"type": "string",
+				"defaultValue": "Standard_DS3_v2"
+			},
+			"outlier_worker_node": {
+				"type": "string",
+				"defaultValue": "2"
+			},
+			"outlier_week_window": {
+				"type": "string",
+				"defaultValue": "7"
+			},
+			"outlier_last_month_start_date": {
+				"type": "string",
+				"defaultValue": "2022-02-05"
+			},
+			"outlier_last_year_start_date": {
+				"type": "string",
+				"defaultValue": "2021-03-05"
+			},
+			"outlier_week_start_date": {
+				"type": "string",
+				"defaultValue": "2022-03-05"
+			},
+			"outlier_load_option": {
+				"type": "string",
+				"defaultValue": "full"
+			},
+			"outlier_mapping_flg": {
+				"type": "string",
+				"defaultValue": "0"
+			}
+		},
+		"folder": {
+			"name": "MuddaserTalal"
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-06-21T10:39:03Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

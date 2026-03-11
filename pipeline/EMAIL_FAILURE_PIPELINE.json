@@ -1,0 +1,92 @@
+{
+	"name": "EMAIL_FAILURE_PIPELINE",
+	"properties": {
+		"activities": [
+			{
+				"name": "FB_SYNC_PIPELINE_FAILURE_EMAIL",
+				"type": "WebActivity",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "POST",
+					"url": "https://prod-02.eastus.logic.azure.com/workflows/bb1fef9903964e49b8f529488bce234a/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=e6zDsVCw4RXNc1M-hSanqvf9Mj6WUZ2q64KGRJU2dIk",
+					"body": {
+						"value": "@concat('{\"Subject\":\"Pipeline [',pipeline().parameters.PipelineName,'] has been failed\",\"Message\":\"The pipeline run is failed please visit ADF-FB-Algoplus-DEV\"}')\n",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Update Failure Status",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "FB_SYNC_PIPELINE_FAILURE_EMAIL",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[log].[SP_UpdateETLRunDetails_ADF]",
+					"storedProcedureParameters": {
+						"JobId": {
+							"value": {
+								"value": "@pipeline().parameters.JobId",
+								"type": "Expression"
+							},
+							"type": "Int32"
+						},
+						"JobStatus": {
+							"value": "Failure",
+							"type": "String"
+						},
+						"LogMsg": {
+							"value": "Execution Failed Check Logs",
+							"type": "String"
+						},
+						"RowCount": {
+							"value": "0",
+							"type": "Int64"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "Aglo_Plus_FB_EDW_SqlServer_DEV",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"parameters": {
+			"PipelineName": {
+				"type": "string",
+				"defaultValue": "Placeholder"
+			},
+			"JobId": {
+				"type": "string",
+				"defaultValue": "PlaceHolder"
+			}
+		},
+		"folder": {
+			"name": "Facebook Pipelines/Meta Algo Forecast Related"
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-11-07T11:25:51Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

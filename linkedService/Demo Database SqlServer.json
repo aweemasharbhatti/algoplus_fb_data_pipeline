@@ -1,0 +1,27 @@
+{
+	"name": "Demo Database SqlServer",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"description": "To Copy data for Demo",
+		"parameters": {
+			"ServerName": {
+				"type": "string",
+				"defaultValue": "algoplusbbydesql.database.windows.net"
+			},
+			"DatabaseName": {
+				"type": "string",
+				"defaultValue": "AlgoPlusDevMerged"
+			}
+		},
+		"annotations": [],
+		"type": "SqlServer",
+		"typeProperties": {
+			"connectionString": "integrated security=False;data source=@{linkedService().ServerName};initial catalog=@{linkedService().DatabaseName};user id=sqladmin",
+			"encryptedCredential": "eyJDcmVkZW50aWFsSWQiOiI4YmZhMGY5Yi02MGM3LTQ4Y2EtYTU1Yy0xNTlkOTJhYjA2MWUiLCJWZXJzaW9uIjoiMi4wIiwiQ2xhc3NUeXBlIjoiTWljcm9zb2Z0LkRhdGFQcm94eS5Db3JlLkludGVyU2VydmljZURhdGFDb250cmFjdC5DcmVkZW50aWFsU1UwNkNZMTQifQ=="
+		},
+		"connectVia": {
+			"referenceName": "integration-runtime-facebook-dp-new",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

@@ -1,0 +1,58 @@
+{
+	"name": "ds_meta_fc_narrative_csv_s",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureBlobStorage",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": "Meta-FC-Narrative-WEEK-202208-_1_.csv",
+				"folderPath": "algoplus-meta-fc-narrative/input",
+				"container": "fb-forecast-curation"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "Client",
+				"type": "String"
+			},
+			{
+				"name": "Product Group",
+				"type": "String"
+			},
+			{
+				"name": "FC WK",
+				"type": "String"
+			},
+			{
+				"name": "Narrative Creation Date",
+				"type": "String"
+			},
+			{
+				"name": "Narrative Created by",
+				"type": "String"
+			},
+			{
+				"name": "Narrative Last Edited by ",
+				"type": "String"
+			},
+			{
+				"name": "Narrative Last Edit Date",
+				"type": "String"
+			},
+			{
+				"name": "Narrative",
+				"type": "String"
+			}
+		]
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

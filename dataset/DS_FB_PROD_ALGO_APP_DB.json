@@ -1,0 +1,91 @@
+{
+	"name": "DS_FB_PROD_ALGO_APP_DB",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "SqlServer_Web_Facebook_AlgoApp_Production",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"DB_Name": "sqldb-facebook-prod"
+			}
+		},
+		"parameters": {
+			"TableName": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "SqlServerTable",
+		"schema": [
+			{
+				"name": "BRAND",
+				"type": "nvarchar"
+			},
+			{
+				"name": "WEEK_START_DATE",
+				"type": "date"
+			},
+			{
+				"name": "WEEK_END_DATE",
+				"type": "date"
+			},
+			{
+				"name": "WEEK_NUMBER",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "SELL_THROUGH",
+				"type": "decimal",
+				"precision": 16,
+				"scale": 2
+			},
+			{
+				"name": "RETAILER_COUNTRY",
+				"type": "nvarchar"
+			},
+			{
+				"name": "RETAILER_REGION",
+				"type": "nvarchar"
+			},
+			{
+				"name": "OCULUS_TRAFFIC",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "OCULUS_CONVERSION_RATE",
+				"type": "decimal",
+				"precision": 16,
+				"scale": 8
+			},
+			{
+				"name": "PORTAL_TRAFFIC",
+				"type": "decimal",
+				"precision": 16,
+				"scale": 4
+			},
+			{
+				"name": "PORTAL_CONVERSION_RATE",
+				"type": "decimal",
+				"precision": 16,
+				"scale": 8
+			},
+			{
+				"name": "RETAILER_ID",
+				"type": "nvarchar"
+			},
+			{
+				"name": "RETAILER_KEY",
+				"type": "nvarchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": {
+				"value": "@dataset().TableName",
+				"type": "Expression"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

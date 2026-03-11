@@ -1,0 +1,150 @@
+{
+	"name": "DUMP_FACEBOOK_DATA_INTO_DEMO_DB",
+	"properties": {
+		"activities": [
+			{
+				"name": "Get Tables List",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderQuery": "select 'dbo' SchemaName, replace(tablename,'dbo.','') TableName from dbo.tablename",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "DS_Dynamic_Facebook_SqlServerTable",
+						"type": "DatasetReference",
+						"parameters": {
+							"SchemaName": "dbo",
+							"TableName": "Screen",
+							"FBDatabaseName": {
+								"value": "@pipeline().parameters.FBDataBase",
+								"type": "Expression"
+							}
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ForEach Table",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Get Tables List",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Get Tables List').output.value",
+						"type": "Expression"
+					},
+					"batchCount": 30,
+					"activities": [
+						{
+							"name": "Copy data to Demo DB",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SqlServerSource",
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"sink": {
+									"type": "SqlServerSink",
+									"preCopyScript": {
+										"value": "@{concat('IF OBJECT_ID(N''dbo.', item().TableName,''',N''U'') IS NOT NULL' \n,\n' \ndelete from ',item().TableName)}",
+										"type": "Expression"
+									},
+									"tableOption": "autoCreate"
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "DS_Dynamic_Facebook_SqlServerTable",
+									"type": "DatasetReference",
+									"parameters": {
+										"SchemaName": "dbo",
+										"TableName": {
+											"value": "@item().TableName",
+											"type": "Expression"
+										},
+										"FBDatabaseName": {
+											"value": "@pipeline().parameters.FBDataBase",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "DS_Demo_SqlServerTable",
+									"type": "DatasetReference",
+									"parameters": {
+										"SchemaName": "dbo",
+										"TableName": {
+											"value": "@item().TableName",
+											"type": "Expression"
+										},
+										"DemoDatabaseName": {
+											"value": "@pipeline().parameters.DemoDatabase",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"FBDataBase": {
+				"type": "string",
+				"defaultValue": "algodbfbqa"
+			},
+			"DemoDatabase": {
+				"type": "string",
+				"defaultValue": "AlgoPlusDevMerged"
+			}
+		},
+		"folder": {
+			"name": "Ali Awan POC"
+		},
+		"annotations": [],
+		"lastPublishTime": "2021-11-15T22:11:26Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

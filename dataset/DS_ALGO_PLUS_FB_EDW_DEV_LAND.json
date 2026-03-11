@@ -1,0 +1,31 @@
+{
+	"name": "DS_ALGO_PLUS_FB_EDW_DEV_LAND",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "Aglo_Plus_FB_EDW_SqlServer_DEV",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"SchemaName": {
+				"type": "string"
+			},
+			"TableName": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "SqlServerTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": {
+				"value": "@dataset().SchemaName",
+				"type": "Expression"
+			},
+			"table": {
+				"value": "@dataset().TableName",
+				"type": "Expression"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

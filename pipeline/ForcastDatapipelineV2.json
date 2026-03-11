@@ -1,0 +1,562 @@
+{
+	"name": "ForcastDatapipelineV2",
+	"properties": {
+		"activities": [
+			{
+				"name": "Copy data sql",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "demandPlanningForecastPy",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"wildcardFolderPath": {
+								"value": "@concat(pipeline().parameters.notebook_output_file_path,'/',pipeline().parameters.forecast_key,'/',pipeline().parameters.file_name)\n",
+								"type": "Expression"
+							},
+							"wildcardFileName": "*.csv",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings",
+							"skipLineCount": 0
+						}
+					},
+					"sink": {
+						"type": "AzureSqlSink",
+						"preCopyScript": {
+							"value": "@{concat('delete from  engine.','forecast where forecast_key=','''',pipeline().parameters.forecast_key,'''')}",
+							"type": "Expression"
+						},
+						"writeBehavior": "insert",
+						"sqlWriterUseTableLock": false,
+						"disableMetricsCollection": false
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "CSVSinkDatasetV2",
+						"type": "DatasetReference",
+						"parameters": {
+							"folder": {
+								"value": "@concat(pipeline().parameters.notebook_output_file_path,'/',pipeline().parameters.forecast_key)",
+								"type": "Expression"
+							},
+							"file": {
+								"value": "@pipeline().parameters.file_name",
+								"type": "Expression"
+							},
+							"conatiner": {
+								"value": "@toLower(pipeline().parameters.client_name)",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "AzureSQLDynamic",
+						"type": "DatasetReference",
+						"parameters": {
+							"server": {
+								"value": "@pipeline().parameters.servername",
+								"type": "Expression"
+							},
+							"schema": {
+								"value": "@pipeline().parameters.target_schema",
+								"type": "Expression"
+							},
+							"table": {
+								"value": "@pipeline().parameters.target_table",
+								"type": "Expression"
+							},
+							"DB": {
+								"value": "@pipeline().parameters.database",
+								"type": "Expression"
+							},
+							"User": {
+								"value": "@pipeline().parameters.user",
+								"type": "Expression"
+							},
+							"Password": {
+								"value": "@pipeline().parameters.password",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "Copy data",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 1,
+					"retryIntervalInSeconds": 240,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[engine].[ForecastpipelineData]",
+						"storedProcedureParameters": {
+							"PforecastKey": {
+								"type": "String",
+								"value": {
+									"value": "@pipeline().parameters.forecast_key",
+									"type": "Expression"
+								}
+							}
+						},
+						"queryTimeout": "00:10:00",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "DelimitedTextSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextWriteSettings",
+							"quoteAllText": true,
+							"fileExtension": ".txt"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "AzureSQLDynamic",
+						"type": "DatasetReference",
+						"parameters": {
+							"server": {
+								"value": "@pipeline().parameters.servername",
+								"type": "Expression"
+							},
+							"schema": "dbo",
+							"table": "temp",
+							"DB": {
+								"value": "@pipeline().parameters.database",
+								"type": "Expression"
+							},
+							"User": {
+								"value": "@pipeline().parameters.user",
+								"type": "Expression"
+							},
+							"Password": {
+								"value": "@pipeline().parameters.password",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "CSVSinkDatasetV2",
+						"type": "DatasetReference",
+						"parameters": {
+							"folder": {
+								"value": "@concat(pipeline().parameters.output_path,'/',pipeline().parameters.forecast_key)",
+								"type": "Expression"
+							},
+							"file": {
+								"value": "@pipeline().parameters.file_name",
+								"type": "Expression"
+							},
+							"conatiner": {
+								"value": "@toLower(pipeline().parameters.client_name)",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "demandPlanningForecastPy",
+				"type": "DatabricksNotebook",
+				"dependsOn": [
+					{
+						"activity": "Copy data",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 1,
+					"retryIntervalInSeconds": 240,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebookPath": "/Workspace/Users/muhammad.muddaser@algo.com/muddaser.talal@algo.com/ForecastEngineV2/demandPlanningForecastPy",
+					"baseParameters": {
+						"file_name": {
+							"value": "@pipeline().parameters.file_name",
+							"type": "Expression"
+						},
+						"input_file_path": {
+							"value": "@concat(pipeline().parameters.output_path,'/',pipeline().parameters.forecast_key,'/')",
+							"type": "Expression"
+						},
+						"output_file_path": {
+							"value": "@pipeline().parameters.notebook_output_file_path",
+							"type": "Expression"
+						},
+						"forecast_type": {
+							"value": "@pipeline().parameters.forecast_type",
+							"type": "Expression"
+						},
+						"lookback_window": {
+							"value": "@pipeline().parameters.lookback_window",
+							"type": "Expression"
+						},
+						"forecast_future_weeks": {
+							"value": "@pipeline().parameters.forecast_future_weeks",
+							"type": "Expression"
+						},
+						"delimiterInput": {
+							"value": "@pipeline().parameters.delimiterInput",
+							"type": "Expression"
+						},
+						"forecast_week_start_day": {
+							"value": "@pipeline().parameters.forecast_week_start_day",
+							"type": "Expression"
+						},
+						"headerInput": {
+							"value": "@pipeline().parameters.headerInput",
+							"type": "Expression"
+						},
+						"repartitionInput": {
+							"value": "@pipeline().parameters.repartitionInput",
+							"type": "Expression"
+						},
+						"furture_week_start_date": {
+							"value": "@pipeline().parameters.furture_week_start_date",
+							"type": "Expression"
+						},
+						"forecast_key": {
+							"value": "@pipeline().parameters.forecast_key",
+							"type": "Expression"
+						},
+						"wma_weights": {
+							"value": "@pipeline().parameters.wma_weights",
+							"type": "Expression"
+						},
+						"container": {
+							"value": "@pipeline().parameters.client_name",
+							"type": "Expression"
+						},
+						"locklookback": {
+							"value": "@pipeline().parameters.locklookback",
+							"type": "Expression"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureDatabricksLinkService_New",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "UpdatePipelineStatus_Success",
+				"type": "Script",
+				"dependsOn": [
+					{
+						"activity": "Copy data sql",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "AzureSQLparameterizedLink",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"server": "@pipeline().parameters.servername",
+						"DB": "@pipeline().parameters.database",
+						"user": "@pipeline().parameters.user",
+						"password": "@pipeline().parameters.password"
+					}
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "Query",
+							"text": {
+								"value": "UPDATE [engine].[AzurePipelineTrigger]\nSET Status = 'SUCCEEDED',\nMessage = 'Pipeline execution completed successfully.',\nRunEnd = GETUTCDATE()\nWHERE RunId = '@{pipeline().RunId}'",
+								"type": "Expression"
+							}
+						}
+					],
+					"scriptBlockExecutionTimeout": "02:00:00"
+				}
+			},
+			{
+				"name": "UpdatePipelineStatus_Copy_Data_Sql_Failed",
+				"type": "Script",
+				"dependsOn": [
+					{
+						"activity": "Copy data sql",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "AzureSQLparameterizedLink",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"server": "@pipeline().parameters.servername",
+						"DB": "@pipeline().parameters.database",
+						"user": "@pipeline().parameters.user",
+						"password": "@pipeline().parameters.password"
+					}
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "Query",
+							"text": {
+								"value": "UPDATE [engine].[AzurePipelineTrigger]\nSET Status = 'Failed',\nMessage = 'Copy Data Sql Failed',\nRunEnd = GETUTCDATE()\nWHERE RunId = '@{pipeline().RunId}'",
+								"type": "Expression"
+							}
+						}
+					],
+					"scriptBlockExecutionTimeout": "02:00:00"
+				}
+			},
+			{
+				"name": "UpdatePipelineStatus_demandPlanningForecastPy_Failed",
+				"type": "Script",
+				"dependsOn": [
+					{
+						"activity": "demandPlanningForecastPy",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "AzureSQLparameterizedLink",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"server": "@pipeline().parameters.servername",
+						"DB": "@pipeline().parameters.database",
+						"user": "@pipeline().parameters.user",
+						"password": "@pipeline().parameters.password"
+					}
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "Query",
+							"text": {
+								"value": "UPDATE [engine].[AzurePipelineTrigger]\nSET Status = 'FAILED',\nMessage = 'demandPlanningForecastPy Failed',\nRunEnd = GETUTCDATE()\nWHERE RunId = '@{pipeline().RunId}'",
+								"type": "Expression"
+							}
+						}
+					],
+					"scriptBlockExecutionTimeout": "02:00:00"
+				}
+			},
+			{
+				"name": "UpdatePipelineStatus_Copy data Failed",
+				"type": "Script",
+				"dependsOn": [
+					{
+						"activity": "Copy data",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "AzureSQLparameterizedLink",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"server": "@pipeline().parameters.servername",
+						"DB": "@pipeline().parameters.database",
+						"user": "@pipeline().parameters.user",
+						"password": "@pipeline().parameters.password"
+					}
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "Query",
+							"text": {
+								"value": "UPDATE [engine].[AzurePipelineTrigger]\nSET Status = 'FAILED',\nMessage = 'COPY DATA FAILED',\nRunEnd = GETUTCDATE()\nWHERE RunId = '@{pipeline().RunId}'",
+								"type": "Expression"
+							}
+						}
+					],
+					"scriptBlockExecutionTimeout": "02:00:00"
+				}
+			}
+		],
+		"parameters": {
+			"forecast_future_weeks": {
+				"type": "string",
+				"defaultValue": "52"
+			},
+			"delimiterInput": {
+				"type": "string",
+				"defaultValue": ","
+			},
+			"forecast_week_start_day": {
+				"type": "string",
+				"defaultValue": "sunday"
+			},
+			"headerInput": {
+				"type": "string",
+				"defaultValue": "True"
+			},
+			"repartitionInput": {
+				"type": "string",
+				"defaultValue": "1"
+			},
+			"lookback_window": {
+				"type": "string",
+				"defaultValue": "7"
+			},
+			"forecast_type": {
+				"type": "string",
+				"defaultValue": "sma"
+			},
+			"file_name": {
+				"type": "string",
+				"defaultValue": "Item_Retailer_sma_0_7.csv"
+			},
+			"notebook_output_file_path": {
+				"type": "string",
+				"defaultValue": "synapse/workspaces/synapse-facebook-dev/demandPlanningOutput"
+			},
+			"output_path": {
+				"type": "string",
+				"defaultValue": "synapse/workspaces/synapse-facebook-dev/demandPlanningInput"
+			},
+			"furture_week_start_date": {
+				"type": "string",
+				"defaultValue": "2022-06-16"
+			},
+			"forecast_key": {
+				"type": "string",
+				"defaultValue": "AA0006"
+			},
+			"wma_weights": {
+				"type": "string",
+				"defaultValue": "0.1,0.15,0.2,0.12,0.08,0.09,0.26"
+			},
+			"cluster_type": {
+				"type": "string",
+				"defaultValue": "Standard_DS3_v2"
+			},
+			"worker_node": {
+				"type": "string",
+				"defaultValue": "2"
+			},
+			"client_name": {
+				"type": "string"
+			},
+			"target_schema": {
+				"type": "string"
+			},
+			"target_table": {
+				"type": "string"
+			},
+			"servername": {
+				"type": "string"
+			},
+			"database": {
+				"type": "string"
+			},
+			"user": {
+				"type": "string"
+			},
+			"password": {
+				"type": "string"
+			},
+			"locklookback": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "MuddaserTalal/ForecastEngineV2"
+		},
+		"annotations": [],
+		"lastPublishTime": "2026-03-03T07:08:45Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

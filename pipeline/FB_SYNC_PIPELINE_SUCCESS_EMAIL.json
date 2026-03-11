@@ -1,0 +1,38 @@
+{
+	"name": "FB_SYNC_PIPELINE_SUCCESS_EMAIL",
+	"properties": {
+		"activities": [
+			{
+				"name": "FB_PIPELINE_SUCCESS_EMAIL",
+				"type": "WebActivity",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "POST",
+					"url": "https://prod-26.eastus.logic.azure.com:443/workflows/bcbf2619295a4ff6b4038609c399ba24/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=ZG4d2NABWqRiXasCUZtpMUCOegSrE9TsUpbBbjWjXxk",
+					"connectVia": {
+						"referenceName": "integration-runtime-facebook-dp-new",
+						"type": "IntegrationRuntimeReference"
+					},
+					"body": {
+						"Subject": "Pipeline [FACEBOOK_SYNC_DATA] run successfully",
+						"Message": "The pipeline run was successful and the facebook reports are refreshed now"
+					}
+				}
+			}
+		],
+		"folder": {
+			"name": "Facebook Pipelines"
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-11-07T11:20:33Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

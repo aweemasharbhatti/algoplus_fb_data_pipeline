@@ -1,0 +1,589 @@
+{
+	"name": "FACEBOOK_DATA_DUMP_AND_FILES_MOVEMENT",
+	"properties": {
+		"activities": [
+			{
+				"name": "Insert Job Run Details",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[log].[SP_InsertETLRunDetails_ADF]",
+					"storedProcedureParameters": {
+						"JobID": {
+							"value": {
+								"value": "@pipeline().parameters.JobHeaderSK",
+								"type": "Expression"
+							},
+							"type": "Int32"
+						},
+						"JobType": {
+							"value": {
+								"value": "Extract",
+								"type": "Expression"
+							},
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "Aglo_Plus_FB_EDW_SqlServer_DEV",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "Copy data From Blob To DL",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Insert Job Run Details",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"sink": {
+						"type": "DelimitedTextSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextWriteSettings",
+							"quoteAllText": true,
+							"fileExtension": ".txt"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_BLOB_ARCHIVE_CSV",
+						"type": "DatasetReference",
+						"parameters": {
+							"FileName": {
+								"value": "@pipeline().parameters.FileName",
+								"type": "Expression"
+							},
+							"FolderPath": {
+								"value": "@concat('Input/',formatDateTime(utcnow(),'yyyy-MM-dd'))",
+								"type": "Expression"
+							},
+							"deli_Comma": ",",
+							"deli_Tab": "\t"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_DATALAKE_CSV",
+						"type": "DatasetReference",
+						"parameters": {
+							"FolderName": {
+								"value": "LandingZone",
+								"type": "Expression"
+							},
+							"FileName": {
+								"value": "@concat(toUpper(pipeline().parameters.JobCategory),'_',formatDateTime(utcnow(),'yyyyMMdd'),'.csv')",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "Update Detail Run On Success",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "Copy data From Blob To DL",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[log].[SP_UpdateETLRunDetails_ADF]",
+					"storedProcedureParameters": {
+						"JobId": {
+							"value": {
+								"value": "@pipeline().parameters.JobHeaderSK",
+								"type": "Expression"
+							},
+							"type": "Int32"
+						},
+						"JobStatus": {
+							"value": {
+								"value": "@activity('Copy data From Blob To DL').output.executionDetails[0].status",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"LogMsg": {
+							"value": {
+								"value": "@activity('Copy data From Blob To DL').output.errors",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"RowCount": {
+							"value": {
+								"value": "@activity('Copy data From Blob To DL').output.rowsCopied",
+								"type": "Expression"
+							},
+							"type": "Int64"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "Aglo_Plus_FB_EDW_SqlServer_DEV",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "Update Detail Run On Failure",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "Copy data From Blob To DL",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[log].[SP_UpdateETLRunDetails_ADF]",
+					"storedProcedureParameters": {
+						"JobId": {
+							"value": {
+								"value": "@pipeline().parameters.JobHeaderSK",
+								"type": "Expression"
+							},
+							"type": "Int32"
+						},
+						"JobStatus": {
+							"value": {
+								"value": "@activity('Copy data From Blob To DL').output.executionDetails[0].status",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"LogMsg": {
+							"value": {
+								"value": "@replace(activity('Copy data From Blob To DL').error.message,'''',' ')",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"RowCount": {
+							"value": {
+								"value": "0",
+								"type": "Expression"
+							},
+							"type": "Int64"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "Aglo_Plus_FB_EDW_SqlServer_DEV",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "Copy Data To SQL Landing Table",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Insert Details For DB Data Loading",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"sink": {
+						"type": "SqlServerSink",
+						"preCopyScript": {
+							"value": "@{concat('truncate table land.',if(equals(pipeline().parameters.DataGroupCategory,'Fact'),'FACT',if(equals(pipeline().parameters.DataGroupCategory,'Dimension'),'DIM','')),'_',toUpper(pipeline().parameters.JobCategory))}",
+							"type": "Expression"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_DATALAKE_CSV",
+						"type": "DatasetReference",
+						"parameters": {
+							"FolderName": {
+								"value": "LandingZone",
+								"type": "Expression"
+							},
+							"FileName": {
+								"value": "@concat(toUpper(pipeline().parameters.JobCategory),'_',formatDateTime(utcnow(),'yyyyMMdd'),'.csv')",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_ALGO_PLUS_FB_EDW_DEV_LAND",
+						"type": "DatasetReference",
+						"parameters": {
+							"SchemaName": {
+								"value": "land",
+								"type": "Expression"
+							},
+							"TableName": {
+								"value": "@concat(if(equals(pipeline().parameters.DataGroupCategory,'Fact'),'FACT',if(equals(pipeline().parameters.DataGroupCategory,'Dimension'),'DIM','')),'_',toUpper(pipeline().parameters.JobCategory))",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "Insert Details For DB Data Loading",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "Update Detail Run On Success",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[log].[SP_InsertETLRunDetails_ADF]",
+					"storedProcedureParameters": {
+						"JobID": {
+							"value": {
+								"value": "@pipeline().parameters.JobHeaderSK",
+								"type": "Expression"
+							},
+							"type": "Int32"
+						},
+						"JobType": {
+							"value": {
+								"value": "Load",
+								"type": "Expression"
+							},
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "Aglo_Plus_FB_EDW_SqlServer_DEV",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "Update Detail Run On Successfull Data Dump",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "Copy Data To SQL Landing Table",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[log].[SP_UpdateETLRunDetails_ADF]",
+					"storedProcedureParameters": {
+						"JobId": {
+							"value": {
+								"value": "@pipeline().parameters.JobHeaderSK",
+								"type": "Expression"
+							},
+							"type": "Int32"
+						},
+						"JobStatus": {
+							"value": {
+								"value": "@activity('Copy Data To SQL Landing Table').output.executionDetails[0].status",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"LogMsg": {
+							"value": {
+								"value": "@activity('Copy Data To SQL Landing Table').output.errors",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"RowCount": {
+							"value": {
+								"value": "@activity('Copy Data To SQL Landing Table').output.rowsCopied",
+								"type": "Expression"
+							},
+							"type": "Int64"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "Aglo_Plus_FB_EDW_SqlServer_DEV",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "Move Files To Archived Folder AT DL",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Copy Data To SQL Landing Table",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "FACEBOOK_MOVE_TO_ARCHIVE_FOLDER",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"JobCategory": {
+							"value": "@pipeline().parameters.JobCategory",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Move Files To Archived Folder At Blob",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Copy Data To SQL Landing Table",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "FACEBOOK_MOVE_BLOB_FILES_TO_ARCHIVE",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"JobName": {
+							"value": "@pipeline().parameters.JobName",
+							"type": "Expression"
+						},
+						"FileName": {
+							"value": "@pipeline().parameters.FileName",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Update Detail Run On Data Dump Failure",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "Copy Data To SQL Landing Table",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[log].[SP_UpdateETLRunDetails_ADF]",
+					"storedProcedureParameters": {
+						"JobId": {
+							"value": {
+								"value": "@pipeline().parameters.JobHeaderSK",
+								"type": "Expression"
+							},
+							"type": "Int32"
+						},
+						"JobStatus": {
+							"value": {
+								"value": "@activity('Copy Data To SQL Landing Table').output.executionDetails[0].status",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"LogMsg": {
+							"value": {
+								"value": "@replace(activity('Copy Data To SQL Landing Table').error.message,'''',' ')",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"RowCount": {
+							"value": {
+								"value": "0",
+								"type": "Expression"
+							},
+							"type": "Int64"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "Aglo_Plus_FB_EDW_SqlServer_DEV",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "Execute Land to Stage SP",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "Update Detail Run On Successfull Data Dump",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": {
+						"value": "@concat('stg.SP_LOAD_',if(equals(pipeline().parameters.DataGroupCategory,'Dimension'),'DIM','FACT'),'_',toUpper(pipeline().parameters.JobCategory))",
+						"type": "Expression"
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "Aglo_Plus_FB_EDW_SqlServer_DEV",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"parameters": {
+			"JobName": {
+				"type": "string"
+			},
+			"FileName": {
+				"type": "string"
+			},
+			"JobHeaderSK": {
+				"type": "string"
+			},
+			"JobCategory": {
+				"type": "string"
+			},
+			"DataGroupCategory": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "Facebook Pipelines"
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-11-07T11:20:33Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

@@ -1,0 +1,373 @@
+{
+	"name": "FACEBOOK_PROCESS_FORECAST_TABULAR_MODEL",
+	"properties": {
+		"activities": [
+			{
+				"name": "LoadMetaData",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderQuery": "select TenantID, AzureASClientID, AzureASClientSecret, SubscriptionID,\nAzureASRegion, AzureASServer, AzureASDatabase\nfrom (\nselect ObjectValue 'TenantID' from log.AzureCredentials\nwhere ObjectKey = 'TenantID') t1,\n(\nselect ObjectValue 'AzureASClientID' from log.AzureCredentials\nwhere ObjectKey = 'AzureASClientID') t2,\n(\nselect ObjectValue 'AzureASClientSecret' from log.AzureCredentials\nwhere ObjectKey = 'AzureASClientSecret') t3,\n(\nselect ObjectValue 'SubscriptionID' from log.AzureCredentials\nwhere ObjectKey = 'SubscriptionID') t4,\n(\nselect ObjectValue 'AzureASRegion' from log.AzureCredentials\nwhere ObjectKey = 'AzureASRegion') t5,\n(\nselect ObjectValue 'AzureASServer' from log.AzureCredentials\nwhere ObjectKey = 'AzureASServer') t6,\n(\nselect ObjectValue 'AzureASDatabase' from log.AzureCredentials\nwhere ObjectKey = 'AzureASDatabase') t7;",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "DS_ALGO_PLUS_FB_EDW_DEV_LAND",
+						"type": "DatasetReference",
+						"parameters": {
+							"SchemaName": "NULL",
+							"TableName": "NULL"
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "Login",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "LoadMetaData",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/x-www-form-urlencoded"
+					},
+					"url": {
+						"value": "@concat('https://login.microsoftonline.com/',activity('LoadMetaData').output.value[0].TenantID,'/oauth2/token')",
+						"type": "Expression"
+					},
+					"connectVia": {
+						"referenceName": "integration-runtime-facebook-dp-new",
+						"type": "IntegrationRuntimeReference"
+					},
+					"body": {
+						"value": "@concat('grant_type=client_credentials&resource=https://*.asazure.windows.net&client_id=',activity('LoadMetaData').output.value[0].AzureASClientID,'&client_secret=',activity('LoadMetaData').output.value[0].AzureASClientSecret)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "StartProcessingAzureAS",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Login",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "POST",
+					"headers": {
+						"Authorization": {
+							"value": "@concat(string(activity('Login').output.token_type),' ',string(activity('Login').output.access_token))",
+							"type": "Expression"
+						}
+					},
+					"httpRequestTimeout": "00:04:00",
+					"url": {
+						"value": "@concat('https://',activity('LoadMetaData').output.value[0].AzureASRegion,'.asazure.windows.net/servers/',activity('LoadMetaData').output.value[0].AzureASServer,'/models/',activity('LoadMetaData').output.value[0].AzureASDatabase,'/refreshes')",
+						"type": "Expression"
+					},
+					"connectVia": {
+						"referenceName": "integration-runtime-facebook-dp-new",
+						"type": "IntegrationRuntimeReference"
+					},
+					"body": {
+						"value": "{\"Type\":\"Full\",\"CommitMode\":\"transactional\",\"MaxParallelism\":5,\"RetryCount\":2,\"Objects\":\n[\n{\"table\":\"FACT_FORECAST\",\"partition\":\"FACT_FORECAST_2016_2019\"},\n{\"table\":\"FACT_FORECAST\",\"partition\":\"FACT_FORECAST_2020_2020\"},\n{\"table\":\"FACT_FORECAST\",\"partition\":\"FACT_FORECAST_2021_2021\"},\n{\"table\":\"FACT_FORECAST\",\"partition\":\"FACT_FORECAST_2022_2022\"},\n{\"table\":\"FACT_FORECAST\",\"partition\":\"FACT_FORECAST_2023_2023\"},\n{\"table\":\"FACT_FORECAST\",\"partition\":\"FACT_FORECAST_2024_2024\"},\n{\"table\":\"FACT_FORECAST\",\"partition\":\"FACT_FORECAST_2025_2025\"},\n{\"table\":\"FACT_INDIRECT_INVENTORY_DISTRIBUTOR\",\"partition\":\"Partition\"},\n{\"table\":\"FACT_DIRECT_INVENTORY\",\"partition\":\"Partition\"},\n{\"table\":\"FACT_INDIRECT_INVENTORY\",\"partition\":\"Partition\"},\n{\"table\":\"COMMIT_AUDIT_TRAIL\",\"partition\":\"Partition\"}\n]}",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "GetAzureASRefreshes",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "StartProcessingAzureAS",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "GET",
+					"headers": {
+						"Authorization": {
+							"value": "@concat(string(activity('Login').output.token_type),' ',string(activity('Login').output.access_token))",
+							"type": "Expression"
+						}
+					},
+					"httpRequestTimeout": "00:04:00",
+					"url": {
+						"value": "@concat('https://',activity('LoadMetaData').output.value[0].AzureASRegion,'.asazure.windows.net/servers/',activity('LoadMetaData').output.value[0].AzureASServer,'/models/',activity('LoadMetaData').output.value[0].AzureASDatabase,'/refreshes')",
+						"type": "Expression"
+					},
+					"connectVia": {
+						"referenceName": "integration-runtime-facebook-dp-new",
+						"type": "IntegrationRuntimeReference"
+					}
+				}
+			},
+			{
+				"name": "FilterToCurrentRefresh",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "GetAzureASRefreshes",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@json(activity('GetAzureASRefreshes').output.Response)",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@greaterOrEquals(item().startTime,addseconds(activity('StartProcessingAzureAS').output.startTime,-30))",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "UntilRefreshComplete",
+				"type": "Until",
+				"dependsOn": [
+					{
+						"activity": "FilterToCurrentRefresh",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@not(equals(activity('GetAzureASRefreshStatus').output.status,'inProgress'))",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Wait30Seconds",
+							"type": "Wait",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"waitTimeInSeconds": 60
+							}
+						},
+						{
+							"name": "GetAzureASRefreshStatus",
+							"type": "WebActivity",
+							"dependsOn": [
+								{
+									"activity": "Wait30Seconds",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"method": "GET",
+								"headers": {
+									"Authorization": {
+										"value": "@concat(string(activity('Login').output.token_type),' ',string(activity('Login').output.access_token))",
+										"type": "Expression"
+									}
+								},
+								"url": {
+									"value": "@concat('https://',activity('LoadMetaData').output.value[0].AzureASRegion,'.asazure.windows.net/servers/',activity('LoadMetaData').output.value[0].AzureASServer,'/models/',activity('LoadMetaData').output.value[0].AzureASDatabase,'/refreshes/',activity('FilterToCurrentRefresh').output.Value[0].refreshId)",
+									"type": "Expression"
+								},
+								"connectVia": {
+									"referenceName": "integration-runtime-facebook-dp-new",
+									"type": "IntegrationRuntimeReference"
+								}
+							}
+						}
+					],
+					"timeout": "7.00:00:00"
+				}
+			},
+			{
+				"name": "IfFailed",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "UntilRefreshComplete",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(activity('GetAzureASRefreshStatus').output.status,'failed')",
+						"type": "Expression"
+					},
+					"ifFalseActivities": [
+						{
+							"name": "UpdateCubeProcessingSuccessDetails",
+							"type": "SqlServerStoredProcedure",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"storedProcedureName": "[log].[SP_UpdateETLRunDetails_ADF]",
+								"storedProcedureParameters": {
+									"JobId": {
+										"value": "21",
+										"type": "Int32"
+									},
+									"JobStatus": {
+										"value": {
+											"value": "Succeeded",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"LogMsg": {
+										"value": "Check Logs",
+										"type": "String"
+									},
+									"RowCount": {
+										"value": "0",
+										"type": "Int64"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "Aglo_Plus_FB_EDW_SqlServer_DEV",
+								"type": "LinkedServiceReference"
+							}
+						}
+					],
+					"ifTrueActivities": [
+						{
+							"name": "Error",
+							"type": "Wait",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"waitTimeInSeconds": 5
+							}
+						},
+						{
+							"name": "UpdateCubeProcessingFailureDetails",
+							"type": "SqlServerStoredProcedure",
+							"dependsOn": [
+								{
+									"activity": "Error",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"storedProcedureName": "[log].[SP_UpdateETLRunDetails_ADF]",
+								"storedProcedureParameters": {
+									"JobId": {
+										"value": "21",
+										"type": "Int32"
+									},
+									"JobStatus": {
+										"value": {
+											"value": "@activity('GetAzureASRefreshStatus').output.status",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"LogMsg": {
+										"value": "Check Logs",
+										"type": "String"
+									},
+									"RowCount": {
+										"value": "0",
+										"type": "Int64"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "Aglo_Plus_FB_EDW_SqlServer_DEV",
+								"type": "LinkedServiceReference"
+							}
+						}
+					]
+				}
+			}
+		],
+		"folder": {
+			"name": "Facebook Pipelines"
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-12-13T11:14:32Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

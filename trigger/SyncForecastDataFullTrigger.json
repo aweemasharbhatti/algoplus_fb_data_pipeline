@@ -1,0 +1,35 @@
+{
+	"name": "SyncForecastDataFullTrigger",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Stopped",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "FACEBOOK_SYNC_DATA_FULL_MODE",
+					"type": "PipelineReference"
+				},
+				"parameters": {
+					"ExecutionMode": "Full"
+				}
+			}
+		],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Week",
+				"interval": 1,
+				"startTime": "2021-09-24T14:40:00Z",
+				"timeZone": "UTC",
+				"schedule": {
+					"hours": [
+						3
+					],
+					"weekDays": [
+						"Sunday"
+					]
+				}
+			}
+		}
+	}
+}

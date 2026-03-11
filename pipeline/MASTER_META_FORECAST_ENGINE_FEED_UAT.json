@@ -1,0 +1,130 @@
+{
+	"name": "MASTER_META_FORECAST_ENGINE_FEED_UAT",
+	"properties": {
+		"activities": [
+			{
+				"name": "Execute META_FORECAST_ENGINE_FEED",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "META_FORECAST_ENGINE_FEED_QA",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "FB_FORECAST_ENGINE_PIPELINE_SUCCESS_EMAIL",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "SP Engine ConsolidatedDataLoad",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "POST",
+					"url": "https://prod-81.eastus.logic.azure.com:443/workflows/3a52b8da1cb74de792ee0f9e3ca89d06/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=rsPHuDvp742N7C3vA0ICmS-a5vT8EW_sr-lkDPwOwdA",
+					"connectVia": {
+						"referenceName": "integration-runtime-facebook-dp-new",
+						"type": "IntegrationRuntimeReference"
+					},
+					"body": {
+						"Subject": "Pipeline [META_FORECAST_ENGINE_FEED] has been successfully completed",
+						"Message": "The pipeline run is successfully completed "
+					}
+				}
+			},
+			{
+				"name": "FB_FORECAST_ENGINE_PIPELINE_FAILURE_EMAIL",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "SP Engine ConsolidatedDataLoad",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "POST",
+					"url": "https://prod-81.eastus.logic.azure.com:443/workflows/3a52b8da1cb74de792ee0f9e3ca89d06/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=rsPHuDvp742N7C3vA0ICmS-a5vT8EW_sr-lkDPwOwdA",
+					"connectVia": {
+						"referenceName": "integration-runtime-facebook-dp-new",
+						"type": "IntegrationRuntimeReference"
+					},
+					"body": {
+						"Subject": "Pipeline [META_FORECAST_ENGINE_FEED] has been failed",
+						"Message": "The pipeline run is failed please visit ADF-FB-Algoplus-DEV"
+					}
+				}
+			},
+			{
+				"name": "SP Engine ConsolidatedDataLoad",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "Execute META_FORECAST_ENGINE_FEED",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[engine].[ConsolidatedDataLoad]",
+					"storedProcedureParameters": {
+						"DeleteInactiveCombination": {
+							"value": "1",
+							"type": "Int16"
+						},
+						"FlushData": {
+							"value": "0",
+							"type": "Int16"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "sqlserver_web_play_uat_database",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"folder": {
+			"name": "Facebook Pipelines/Meta Algo Forecast Related"
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-11-24T10:58:14Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

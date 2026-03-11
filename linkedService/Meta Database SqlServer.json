@@ -1,0 +1,27 @@
+{
+	"name": "Meta Database SqlServer",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"description": "Meta Database SqlServer (QA and DEV)",
+		"parameters": {
+			"ServerName": {
+				"type": "string",
+				"defaultValue": "srv-db-algoplus-db.database.windows.net"
+			},
+			"Database": {
+				"type": "string",
+				"defaultValue": "algodbfbqa"
+			}
+		},
+		"annotations": [],
+		"type": "SqlServer",
+		"typeProperties": {
+			"connectionString": "integrated security=False;data source=@{linkedService().ServerName};initial catalog=@{linkedService().Database};user id=adfappuserfbqa",
+			"encryptedCredential": "eyJDcmVkZW50aWFsSWQiOiI3MjY4M2YzYS1iZmFmLTQyYzEtOWFiZS04YmMzZGRkOWM2ZmEiLCJWZXJzaW9uIjoiMi4wIiwiQ2xhc3NUeXBlIjoiTWljcm9zb2Z0LkRhdGFQcm94eS5Db3JlLkludGVyU2VydmljZURhdGFDb250cmFjdC5DcmVkZW50aWFsU1UwNkNZMTQifQ=="
+		},
+		"connectVia": {
+			"referenceName": "integration-runtime-facebook-dp-new",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

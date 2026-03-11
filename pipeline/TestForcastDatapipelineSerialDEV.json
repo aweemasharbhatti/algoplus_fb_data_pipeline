@@ -1,0 +1,326 @@
+{
+	"name": "TestForcastDatapipelineSerialDEV",
+	"properties": {
+		"activities": [
+			{
+				"name": "Copy data sql",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Notebook",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"wildcardFolderPath": {
+								"value": "@concat(pipeline().parameters.notebook_output_file_path,'/',pipeline().parameters.forecast_key,'/',pipeline().parameters.file_name)\n",
+								"type": "Expression"
+							},
+							"wildcardFileName": "*.csv",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings",
+							"skipLineCount": 0
+						}
+					},
+					"sink": {
+						"type": "AzureSqlSink",
+						"preCopyScript": {
+							"value": "@{concat('delete from  engine.','forecast where forecast_key=','''',pipeline().parameters.forecast_key,'''')}",
+							"type": "Expression"
+						},
+						"writeBehavior": "insert",
+						"sqlWriterUseTableLock": false,
+						"disableMetricsCollection": false
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "CSVSinkDatasetDev",
+						"type": "DatasetReference",
+						"parameters": {
+							"folder": {
+								"value": "@concat(pipeline().parameters.notebook_output_file_path,'/',pipeline().parameters.forecast_key)",
+								"type": "Expression"
+							},
+							"file": {
+								"value": "@pipeline().parameters.file_name",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "AzureSqlDBDEV",
+						"type": "DatasetReference",
+						"parameters": {
+							"schema": "engine",
+							"table": "forecast"
+						}
+					}
+				]
+			},
+			{
+				"name": "Copy data",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 1,
+					"retryIntervalInSeconds": 240,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[engine].[ForecastpipelineData]",
+						"storedProcedureParameters": {
+							"PforecastKey": {
+								"type": "String",
+								"value": {
+									"value": "@pipeline().parameters.forecast_key",
+									"type": "Expression"
+								}
+							}
+						},
+						"queryTimeout": "00:10:00",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "DelimitedTextSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextWriteSettings",
+							"quoteAllText": true,
+							"fileExtension": ".txt"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "AzureSqlDBDEV",
+						"type": "DatasetReference",
+						"parameters": {
+							"schema": "dbo",
+							"table": "temp"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "CSVSinkDatasetDev",
+						"type": "DatasetReference",
+						"parameters": {
+							"folder": {
+								"value": "@concat(pipeline().parameters.output_path,'/',pipeline().parameters.forecast_key)",
+								"type": "Expression"
+							},
+							"file": {
+								"value": "@pipeline().parameters.file_name",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "Notebook",
+				"type": "DatabricksNotebook",
+				"dependsOn": [
+					{
+						"activity": "Copy data",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 1,
+					"retryIntervalInSeconds": 240,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebookPath": "/Users/muddaser.talal@algo.com/DatafactoryScriptsGUID_outlier/demandPlanningForecastPy",
+					"baseParameters": {
+						"file_name": {
+							"value": "@pipeline().parameters.file_name",
+							"type": "Expression"
+						},
+						"input_file_path": {
+							"value": "@concat(pipeline().parameters.output_path,'/',pipeline().parameters.forecast_key,'/')",
+							"type": "Expression"
+						},
+						"output_file_path": {
+							"value": "@pipeline().parameters.notebook_output_file_path",
+							"type": "Expression"
+						},
+						"forecast_type": {
+							"value": "@pipeline().parameters.forecast_type",
+							"type": "Expression"
+						},
+						"lookback_window": {
+							"value": "@pipeline().parameters.lookback_window",
+							"type": "Expression"
+						},
+						"forecast_future_weeks": {
+							"value": "@pipeline().parameters.forecast_future_weeks",
+							"type": "Expression"
+						},
+						"delimiterInput": {
+							"value": "@pipeline().parameters.delimiterInput",
+							"type": "Expression"
+						},
+						"forecast_week_start_day": {
+							"value": "@pipeline().parameters.forecast_week_start_day",
+							"type": "Expression"
+						},
+						"headerInput": {
+							"value": "@pipeline().parameters.headerInput",
+							"type": "Expression"
+						},
+						"repartitionInput": {
+							"value": "@pipeline().parameters.repartitionInput",
+							"type": "Expression"
+						},
+						"furture_week_start_date": {
+							"value": "@pipeline().parameters.furture_week_start_date",
+							"type": "Expression"
+						},
+						"forecast_key": {
+							"value": "@pipeline().parameters.forecast_key",
+							"type": "Expression"
+						},
+						"wma_weights": {
+							"value": "@pipeline().parameters.wma_weights",
+							"type": "Expression"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureDatabrickslinkserviceUpdated",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"clusterType": {
+							"value": "@pipeline().parameters.cluster_type",
+							"type": "Expression"
+						},
+						"workerNode": {
+							"value": "@pipeline().parameters.worker_node",
+							"type": "Expression"
+						}
+					}
+				}
+			}
+		],
+		"parameters": {
+			"forecast_future_weeks": {
+				"type": "string",
+				"defaultValue": "52"
+			},
+			"delimiterInput": {
+				"type": "string",
+				"defaultValue": ","
+			},
+			"forecast_week_start_day": {
+				"type": "string",
+				"defaultValue": "sunday"
+			},
+			"headerInput": {
+				"type": "string",
+				"defaultValue": "True"
+			},
+			"repartitionInput": {
+				"type": "string",
+				"defaultValue": "1"
+			},
+			"lookback_window": {
+				"type": "string",
+				"defaultValue": "7"
+			},
+			"forecast_type": {
+				"type": "string",
+				"defaultValue": "sma"
+			},
+			"file_name": {
+				"type": "string",
+				"defaultValue": "Item_Retailer_sma_0_7.csv"
+			},
+			"notebook_output_file_path": {
+				"type": "string",
+				"defaultValue": "synapse/workspaces/synapse-facebook-dev/demandPlanningOutput"
+			},
+			"output_path": {
+				"type": "string",
+				"defaultValue": "synapse/workspaces/synapse-facebook-dev/demandPlanningInput"
+			},
+			"furture_week_start_date": {
+				"type": "string",
+				"defaultValue": "2022-06-16"
+			},
+			"forecast_key": {
+				"type": "string",
+				"defaultValue": "AA0006"
+			},
+			"wma_weights": {
+				"type": "string",
+				"defaultValue": "0.1,0.15,0.2,0.12,0.08,0.09,0.26"
+			},
+			"cluster_type": {
+				"type": "string",
+				"defaultValue": "Standard_DS3_v2"
+			},
+			"worker_node": {
+				"type": "string",
+				"defaultValue": "2"
+			}
+		},
+		"folder": {
+			"name": "MuddaserTalal"
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-09-06T08:39:02Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

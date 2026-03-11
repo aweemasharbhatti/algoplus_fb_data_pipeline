@@ -1,0 +1,15 @@
+{
+	"name": "sqldb_dataplatform_general_edw_dev",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureSqlDatabase",
+		"typeProperties": {
+			"connectionString": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=sqlserver-dataplatform-general-dev.database.windows.net;Initial Catalog=dwh-meta-qa"
+		},
+		"connectVia": {
+			"referenceName": "integration-runtime-facebook-dp-new",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

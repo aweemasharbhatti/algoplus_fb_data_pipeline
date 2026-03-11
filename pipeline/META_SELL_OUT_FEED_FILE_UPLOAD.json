@@ -1,0 +1,283 @@
+{
+	"name": "META_SELL_OUT_FEED_FILE_UPLOAD",
+	"properties": {
+		"activities": [
+			{
+				"name": "Copy sell out feed excel data to table",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "ExcelSource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": true,
+							"wildcardFileName": "*.xlsx",
+							"enablePartitionDiscovery": false
+						}
+					},
+					"sink": {
+						"type": "AzureSqlSink",
+						"preCopyScript": "truncate table dbo.SELL_OUT_FEED;",
+						"writeBehavior": "insert",
+						"sqlWriterUseTableLock": false,
+						"tableOption": "autoCreate",
+						"disableMetricsCollection": false
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "distributor",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "DISTRIBUTOR",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "distributor_sfid",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "DISTRIBUTOR_SFID",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "invoice_date",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "INVOICE_DATE",
+									"type": "DateTime",
+									"physicalType": "date"
+								}
+							},
+							{
+								"source": {
+									"name": "validated_sku_code",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "VALIDATED_SKU_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "bill_to_customer_name",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "BILL_TO_CUSTOMER_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "retailer",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "RETAILER",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "retailer_sfid",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "RETAILER_SFID",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "sales_qty",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "SALES_QTY",
+									"type": "Int32",
+									"physicalType": "int"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_Blob_Meta_Uploads_Excel",
+						"type": "DatasetReference",
+						"parameters": {
+							"filepath": "fb-sell-out-feed-incoming-file/input/",
+							"filename": "Sell Out Feed -  06222022",
+							"sheetname": "daiquery-Sell Out for Algo-2022"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "AzureSqlDB",
+						"type": "DatasetReference",
+						"parameters": {
+							"schema": "dbo",
+							"table": "SELL_OUT_FEED"
+						}
+					}
+				]
+			},
+			{
+				"name": "Move to archive folder",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Copy sell out feed excel data to table",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "ExcelSource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": true,
+							"wildcardFileName": "*.xlsx",
+							"enablePartitionDiscovery": false
+						}
+					},
+					"sink": {
+						"type": "DelimitedTextSink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextWriteSettings",
+							"quoteAllText": true,
+							"fileExtension": ".txt"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_Blob_Meta_Uploads_Excel",
+						"type": "DatasetReference",
+						"parameters": {
+							"filepath": "fb-sell-out-feed-incoming-file/input",
+							"filename": "Sell Out Feed -  06222022",
+							"sheetname": "daiquery-Sell Out for Algo-2022"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_Blob_Meta_Uploads_Archive",
+						"type": "DatasetReference",
+						"parameters": {
+							"folderpath": "fb-sell-out-feed-incoming-file/archive",
+							"filename": "Sell Out Feed -  06222022"
+						}
+					}
+				]
+			},
+			{
+				"name": "Delete file from source folder",
+				"type": "Delete",
+				"dependsOn": [
+					{
+						"activity": "Move to archive folder",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "DS_Blob_Meta_Uploads_Excel",
+						"type": "DatasetReference",
+						"parameters": {
+							"filepath": "fb-sell-out-feed-incoming-file/input",
+							"filename": "Sell Out Feed -  06222022",
+							"sheetname": "daiquery-Sell Out for Algo-2022"
+						}
+					},
+					"enableLogging": false,
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"wildcardFileName": "*.xlsx",
+						"enablePartitionDiscovery": false
+					}
+				}
+			}
+		],
+		"folder": {
+			"name": "Facebook Pipelines/Meta Algo Forecast Related"
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-11-07T11:25:51Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

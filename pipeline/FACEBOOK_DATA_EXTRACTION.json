@@ -1,0 +1,126 @@
+{
+	"name": "FACEBOOK_DATA_EXTRACTION",
+	"properties": {
+		"activities": [
+			{
+				"name": "Get Metadata",
+				"type": "GetMetadata",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "DS_BLOB_Folder",
+						"type": "DatasetReference",
+						"parameters": {
+							"FolderPath": {
+								"value": "@concat('Input/',formatDateTime(utcnow(),'yyyy-MM-dd'))",
+								"type": "Expression"
+							}
+						}
+					},
+					"fieldList": [
+						"childItems"
+					],
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "DelimitedTextReadSettings"
+					}
+				}
+			},
+			{
+				"name": "Iterate through Each Entity",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Get Metadata",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Get Metadata').output.childItems",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"batchCount": 2,
+					"activities": [
+						{
+							"name": "Data Dump and Files Movement",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "FACEBOOK_DATA_DUMP_AND_FILES_MOVEMENT",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"JobName": {
+										"value": "@if(equals(substring(item().name,20,5),'promo'),'promo',if(equals(substring(item().name,20,8),'webstore'),'webstore',if(equals(substring(item().name,20,11),'pos_st_data'),'pos_st_data',if(equals(substring(item().name,20,24),'in_transit_on_hand_order'),'in_transit_on_hand_order',if(equals(substring(item().name,20,17),'b2b_order_history'),'b2b_order_history',if(equals(substring(item().name,20,14),'product_master'),'product_master',''))))))",
+										"type": "Expression"
+									},
+									"FileName": {
+										"value": "@item().name",
+										"type": "Expression"
+									},
+									"JobHeaderSK": {
+										"value": "@if(equals(substring(item().name,20,5),'promo'),1,if(equals(substring(item().name,20,8),'webstore'),2,if(equals(substring(item().name,20,11),'pos_st_data'),3,if(equals(substring(item().name,20,24),'in_transit_on_hand_order'),4,if(equals(substring(item().name,20,17),'b2b_order_history'),5,if(equals(substring(item().name,20,14),'product_master'),6,''))))))",
+										"type": "Expression"
+									},
+									"JobCategory": {
+										"value": "@if(equals(substring(item().name,20,5),'promo'),'Promotion',if(equals(substring(item().name,20,8),'webstore'),'Traffic',if(equals(substring(item().name,20,11),'pos_st_data'),'Sale',if(equals(substring(item().name,20,24),'in_transit_on_hand_order'),'Inventory',if(equals(substring(item().name,20,17),'b2b_order_history'),'Order',if(equals(substring(item().name,20,14),'product_master'),'Product',''))))))",
+										"type": "Expression"
+									},
+									"DataGroupCategory": {
+										"value": "@if(equals(substring(item().name,20,5),'promo'),'Dimension',if(equals(substring(item().name,20,8),'webstore'),'Fact',if(equals(substring(item().name,20,11),'pos_st_data'),'Fact',if(equals(substring(item().name,20,24),'in_transit_on_hand_order'),'Fact',if(equals(substring(item().name,20,17),'b2b_order_history'),'Fact',if(equals(substring(item().name,20,14),'product_master'),'Dimension',''))))))",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Folder Not Exists",
+				"type": "Wait",
+				"dependsOn": [
+					{
+						"activity": "Get Metadata",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"waitTimeInSeconds": 1
+				}
+			}
+		],
+		"folder": {
+			"name": "Facebook Pipelines"
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-11-07T11:20:33Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

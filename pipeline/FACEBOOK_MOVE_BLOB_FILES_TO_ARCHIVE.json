@@ -1,0 +1,145 @@
+{
+	"name": "FACEBOOK_MOVE_BLOB_FILES_TO_ARCHIVE",
+	"properties": {
+		"activities": [
+			{
+				"name": "Copy data To Archived Folder At Storage Account",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": false,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"sink": {
+						"type": "DelimitedTextSink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextWriteSettings",
+							"quoteAllText": true,
+							"fileExtension": ".txt"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_BLOB_ARCHIVE_CSV",
+						"type": "DatasetReference",
+						"parameters": {
+							"FileName": {
+								"value": "@pipeline().parameters.FileName",
+								"type": "Expression"
+							},
+							"FolderPath": {
+								"value": "@concat('Input/',formatDateTime(utcnow(),'yyyy-MM-dd'))",
+								"type": "Expression"
+							},
+							"deli_Comma": ",",
+							"deli_Tab": "\t"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_BLOB_ARCHIVE_CSV",
+						"type": "DatasetReference",
+						"parameters": {
+							"FileName": {
+								"value": "@pipeline().parameters.FileName",
+								"type": "Expression"
+							},
+							"FolderPath": {
+								"value": "@concat('Archived/',formatDateTime(utcnow(),'yyyy-MM-dd'))",
+								"type": "Expression"
+							},
+							"deli_Comma": ",",
+							"deli_Tab": "\t"
+						}
+					}
+				]
+			},
+			{
+				"name": "Delete Files From Storage Account",
+				"type": "Delete",
+				"dependsOn": [
+					{
+						"activity": "Copy data To Archived Folder At Storage Account",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "DS_BLOB_ARCHIVE_CSV",
+						"type": "DatasetReference",
+						"parameters": {
+							"FileName": {
+								"value": "@pipeline().parameters.FileName",
+								"type": "Expression"
+							},
+							"FolderPath": {
+								"value": "@concat('Input/',formatDateTime(utcnow(),'yyyy-MM-dd'))",
+								"type": "Expression"
+							}
+						}
+					},
+					"enableLogging": false,
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					}
+				}
+			}
+		],
+		"parameters": {
+			"JobName": {
+				"type": "string"
+			},
+			"FileName": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "Facebook Pipelines"
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-12-01T10:19:17Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

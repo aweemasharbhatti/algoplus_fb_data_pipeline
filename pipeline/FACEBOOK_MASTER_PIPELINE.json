@@ -1,0 +1,396 @@
+{
+	"name": "FACEBOOK_MASTER_PIPELINE",
+	"properties": {
+		"activities": [
+			{
+				"name": "Get Folder Existance Check",
+				"type": "GetMetadata",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "DS_BLOB_Folder",
+						"type": "DatasetReference",
+						"parameters": {
+							"FolderPath": {
+								"value": "@concat('Input/',formatDateTime(utcnow(),'yyyy-MM-dd'))",
+								"type": "Expression"
+							}
+						}
+					},
+					"fieldList": [
+						"exists"
+					],
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "DelimitedTextReadSettings"
+					}
+				}
+			},
+			{
+				"name": "On Existance or Non-Existance Of Folder",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "Get Folder Existance Check",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@activity('Get Folder Existance Check').output.Exists",
+						"type": "Expression"
+					},
+					"ifFalseActivities": [
+						{
+							"name": "Folder Doesnot Exists",
+							"type": "Wait",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"waitTimeInSeconds": 1
+							}
+						},
+						{
+							"name": "FB_MASTER_PIPELINE_FAILURE_EMAIL",
+							"type": "ExecutePipeline",
+							"dependsOn": [
+								{
+									"activity": "Folder Doesnot Exists",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "FB_MASTER_PIPELINE_FAILURE_EMAIL",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true
+							}
+						}
+					],
+					"ifTrueActivities": [
+						{
+							"name": "Execute Pipeline For Fetching Files",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "FACEBOOK_DATA_EXTRACTION",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true
+							}
+						},
+						{
+							"name": "FACEBOOK_PROCESS_TABULAR_MODEL",
+							"type": "ExecutePipeline",
+							"dependsOn": [
+								{
+									"activity": "FACEBOOK_GET_DATA_FROM_ALGO_PLUS_APP_PRODUCTION_DB",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "FACEBOOK_PROCESS_TABULAR_MODEL",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true
+							}
+						},
+						{
+							"name": "FACEBOOK_SEND_DATA_TO_ALGO_APP_PRODUCTION_DB",
+							"type": "ExecutePipeline",
+							"dependsOn": [
+								{
+									"activity": "FACEBOOK_GET_DATA_FROM_ALGO_PLUS_APP_PRODUCTION_DB",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "FACEBOOK_SEND_DATA_TO_ALGO_APP_PRODUCTION_DB",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true
+							}
+						},
+						{
+							"name": "FACEBOOK_SEND_DATA_TO_ALGO_APP",
+							"type": "ExecutePipeline",
+							"dependsOn": [
+								{
+									"activity": "FACEBOOK_GET_DATA_FROM_ALGO_PLUS_APP_PRODUCTION_DB",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "FACEBOOK_SEND_DATA_TO_ALGO_QA_APP",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true
+							}
+						},
+						{
+							"name": "FACEBOOK_GET_DATA_FROM_ALGO_PLUS_APP_PRODUCTION_DB",
+							"type": "ExecutePipeline",
+							"dependsOn": [
+								{
+									"activity": "Execute Pipeline For Fetching Files",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "FACEBOOK_GET_DATA_FROM_ALGO_PLUS_APP_PRODUCTION_DB",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true
+							}
+						},
+						{
+							"name": "FB_MASTER_PIPELINE_FAILURE_EMAIL_1",
+							"type": "ExecutePipeline",
+							"dependsOn": [
+								{
+									"activity": "Execute Pipeline For Fetching Files",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "FB_MASTER_PIPELINE_FAILURE_EMAIL",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true
+							}
+						},
+						{
+							"name": "FB_MASTER_PIPELINE_FAILURE_EMAIL_2",
+							"type": "ExecutePipeline",
+							"dependsOn": [
+								{
+									"activity": "FACEBOOK_GET_DATA_FROM_ALGO_PLUS_APP_PRODUCTION_DB",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "FB_MASTER_PIPELINE_FAILURE_EMAIL",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true
+							}
+						},
+						{
+							"name": "FB_MASTER_PIPELINE_FAILURE_EMAIL_3",
+							"type": "ExecutePipeline",
+							"dependsOn": [
+								{
+									"activity": "FACEBOOK_PROCESS_TABULAR_MODEL",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "FB_MASTER_PIPELINE_FAILURE_EMAIL",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true
+							}
+						},
+						{
+							"name": "FB_MASTER_PIPELINE_FAILURE_EMAIL_5",
+							"type": "ExecutePipeline",
+							"dependsOn": [
+								{
+									"activity": "FACEBOOK_SEND_DATA_TO_ALGO_APP_PRODUCTION_DB",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "FB_MASTER_PIPELINE_FAILURE_EMAIL",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true
+							}
+						},
+						{
+							"name": "FB_MASTER_PIPELINE_SUCCESS_EMAIL",
+							"type": "ExecutePipeline",
+							"dependsOn": [
+								{
+									"activity": "FACEBOOK_PROCESS_TABULAR_MODEL",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "FB_MASTER_PIPELINE_SUCCESS_EMAIL",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true
+							}
+						},
+						{
+							"name": "FB_MASTER_PIPELINE_FAILURE_EMAIL_3_copy1",
+							"type": "ExecutePipeline",
+							"dependsOn": [
+								{
+									"activity": "FACEBOOK_SEND_DATA_TO_ALGO_APP",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "FB_MASTER_PIPELINE_FAILURE_EMAIL",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "FB_MASTER_PIPELINE_FAILURE_EMAIL_6",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Get Folder Existance Check",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "FB_MASTER_PIPELINE_FAILURE_EMAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "FB_MASTER_PIPELINE_FAILURE_EMAIL_6_copy1",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "On Existance or Non-Existance Of Folder",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "FB_MASTER_PIPELINE_FAILURE_EMAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			}
+		],
+		"folder": {
+			"name": "Facebook Pipelines"
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-11-07T11:20:34Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

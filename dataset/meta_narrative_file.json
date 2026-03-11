@@ -1,0 +1,82 @@
+{
+	"name": "meta_narrative_file",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureBlobStorage",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"FileName": {
+				"type": "string"
+			},
+			"FolderName": {
+				"type": "string"
+			},
+			"Container": {
+				"type": "string"
+			},
+			"SheetName": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "Excel",
+		"typeProperties": {
+			"sheetName": {
+				"value": "@dataset().SheetName",
+				"type": "Expression"
+			},
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": {
+					"value": "@dataset().FileName",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@dataset().FolderName",
+					"type": "Expression"
+				},
+				"container": {
+					"value": "@dataset().Container",
+					"type": "Expression"
+				}
+			},
+			"firstRowAsHeader": true
+		},
+		"schema": [
+			{
+				"name": "Client",
+				"type": "String"
+			},
+			{
+				"name": "Product Group",
+				"type": "String"
+			},
+			{
+				"name": "FC WK",
+				"type": "String"
+			},
+			{
+				"name": "Narrative Creation Date",
+				"type": "String"
+			},
+			{
+				"name": "Narrative Created by",
+				"type": "String"
+			},
+			{
+				"name": "Narrative Last Edited by ",
+				"type": "String"
+			},
+			{
+				"name": "Narrative Last Edit Date",
+				"type": "String"
+			},
+			{
+				"name": "Narrative",
+				"type": "String"
+			}
+		]
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

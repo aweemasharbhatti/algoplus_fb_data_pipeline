@@ -1,0 +1,30 @@
+{
+	"name": "AzureDatabrickslinkservice",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"parameters": {
+			"clusterType": {
+				"type": "String"
+			},
+			"workerNode": {
+				"type": "String"
+			}
+		},
+		"annotations": [],
+		"type": "AzureDatabricks",
+		"typeProperties": {
+			"domain": "https://adb-2163994082811761.1.azuredatabricks.net",
+			"authentication": "MSI",
+			"workspaceResourceId": "/subscriptions/3b96ccbc-e2f4-47c3-b59a-fe29e5359266/resourceGroups/rg-facebook-dp-dev/providers/Microsoft.Databricks/workspaces/FB-ADB-Algoplus",
+			"newClusterNodeType": "@linkedService().clusterType",
+			"newClusterNumOfWorker": "@linkedService().workerNode",
+			"newClusterVersion": "8.1.x-scala2.12",
+			"newClusterInitScripts": [],
+			"clusterOption": "Fixed"
+		},
+		"connectVia": {
+			"referenceName": "integration-runtime-facebook-dp-new",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

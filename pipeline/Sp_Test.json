@@ -1,0 +1,33 @@
+{
+	"name": "Sp_Test",
+	"properties": {
+		"activities": [
+			{
+				"name": "Execute SP_LOAD_FACT_INVENTORY_PLANS",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dbo].[SP_LOAD_FACT_INVENTORY_PLANS]"
+				},
+				"linkedServiceName": {
+					"referenceName": "Aglo_Plus_FB_EDW_SqlServer_DEV",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"folder": {
+			"name": "Test"
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-11-07T11:26:10Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

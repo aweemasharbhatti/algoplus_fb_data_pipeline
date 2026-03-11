@@ -1,0 +1,83 @@
+{
+	"name": "FB_SYNC_PIPELINE_FAILURE_EMAIL",
+	"properties": {
+		"activities": [
+			{
+				"name": "FB_SYNC_PIPELINE_FAILURE_EMAIL",
+				"type": "WebActivity",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "POST",
+					"url": "https://prod-81.eastus.logic.azure.com:443/workflows/3a52b8da1cb74de792ee0f9e3ca89d06/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=rsPHuDvp742N7C3vA0ICmS-a5vT8EW_sr-lkDPwOwdA",
+					"connectVia": {
+						"referenceName": "integration-runtime-facebook-dp-new",
+						"type": "IntegrationRuntimeReference"
+					},
+					"body": {
+						"Subject": "Pipeline [FACEBOOK_SYNC_PIPELINE] has been failed",
+						"Message": "The pipeline run is failed please visit ADF-FB-Algoplus-DEV"
+					}
+				}
+			},
+			{
+				"name": "Update Failure Status",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "FB_SYNC_PIPELINE_FAILURE_EMAIL",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[log].[SP_UpdateETLRunDetails_ADF]",
+					"storedProcedureParameters": {
+						"JobId": {
+							"value": "21",
+							"type": "Int32"
+						},
+						"JobStatus": {
+							"value": "Failure",
+							"type": "String"
+						},
+						"LogMsg": {
+							"value": "Execution Failed Check Logs",
+							"type": "String"
+						},
+						"RowCount": {
+							"value": "0",
+							"type": "Int64"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "Aglo_Plus_FB_EDW_SqlServer_DEV",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"folder": {
+			"name": "Facebook Pipelines"
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-11-07T11:20:33Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

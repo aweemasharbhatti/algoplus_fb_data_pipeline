@@ -1,0 +1,66 @@
+{
+	"name": "MASTER_META_FORECAST_ENGINE_FEED_QA",
+	"properties": {
+		"activities": [
+			{
+				"name": "Execute META_FORECAST_ENGINE_FEED",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "META_FORECAST_ENGINE_FEED_QA",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "SP Engine ConsolidatedDataLoad",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "Execute META_FORECAST_ENGINE_FEED",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[engine].[ConsolidatedDataLoad]",
+					"storedProcedureParameters": {
+						"DeleteInactiveCombination": {
+							"value": "1",
+							"type": "Int16"
+						},
+						"FlushData": {
+							"value": "0",
+							"type": "Int16"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "sqlserver_dataplatform_general_dev",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"folder": {
+			"name": "Facebook Pipelines/Meta Algo Forecast Related"
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-11-24T10:58:14Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

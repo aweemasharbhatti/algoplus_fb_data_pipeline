@@ -1,0 +1,33 @@
+{
+	"name": "ds_sqlserver_web_play_uat_database",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "sqlserver_web_play_uat_database",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"schema": {
+				"type": "string",
+				"defaultValue": "@dataset().schema"
+			},
+			"table": {
+				"type": "string",
+				"defaultValue": "@dataset().table"
+			}
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": {
+				"value": "@dataset().schema",
+				"type": "Expression"
+			},
+			"table": {
+				"value": "@dataset().table",
+				"type": "Expression"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

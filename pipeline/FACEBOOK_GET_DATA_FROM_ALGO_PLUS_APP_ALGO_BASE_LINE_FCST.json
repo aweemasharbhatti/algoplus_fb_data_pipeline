@@ -1,0 +1,668 @@
+{
+	"name": "FACEBOOK_GET_DATA_FROM_ALGO_PLUS_APP_ALGO_BASE_LINE_FCST",
+	"properties": {
+		"activities": [
+			{
+				"name": "Copy Baseline Fcst to EDW",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderQuery": "select  * from fcst_pos_forecast_data\nwhere toolbox_forecast_type='Algo Forecast'",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "SqlServerSink",
+						"preCopyScript": "IF OBJECT_ID(N'dbo.FACT_ALGO_BASE_LINE_FORECAST_APP', N'U') IS NOT NULL\n TRUNCATE TABLE [dbo].[FACT_ALGO_BASE_LINE_FORECAST_APP];  "
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "seasonality_type",
+									"type": "Int32",
+									"physicalType": "int"
+								},
+								"sink": {
+									"name": "seasonality_type",
+									"type": "Int32",
+									"physicalType": "int"
+								}
+							},
+							{
+								"source": {
+									"name": "toolbox_forecast_type",
+									"type": "String",
+									"physicalType": "varchar"
+								},
+								"sink": {
+									"name": "toolbox_forecast_type",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "customer_code",
+									"type": "String",
+									"physicalType": "varchar"
+								},
+								"sink": {
+									"name": "RETAILER_KEY",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "item_code",
+									"type": "String",
+									"physicalType": "varchar"
+								},
+								"sink": {
+									"name": "ITEM_KEY",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "week_date",
+									"type": "String",
+									"physicalType": "nvarchar"
+								},
+								"sink": {
+									"name": "WEEK_END_DATE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "week_number",
+									"type": "String",
+									"physicalType": "nvarchar"
+								},
+								"sink": {
+									"name": "WEEK_NUMBER",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "quantity",
+									"type": "String",
+									"physicalType": "varchar"
+								},
+								"sink": {
+									"name": "QUANTITY",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "seasonal_factor",
+									"type": "String",
+									"physicalType": "varchar"
+								},
+								"sink": {
+									"name": "seasonal_factor",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "promotional_factor",
+									"type": "String",
+									"physicalType": "varchar"
+								},
+								"sink": {
+									"name": "promotional_factor",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "run_date",
+									"type": "String",
+									"physicalType": "nvarchar"
+								},
+								"sink": {
+									"name": "run_date",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "wma_use_percent",
+									"type": "String",
+									"physicalType": "nvarchar"
+								},
+								"sink": {
+									"name": "wma_use_percent",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "seasonality_curve_percent",
+									"type": "String",
+									"physicalType": "nvarchar"
+								},
+								"sink": {
+									"name": "seasonality_curve_percent",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "tema_use_percent",
+									"type": "String",
+									"physicalType": "nvarchar"
+								},
+								"sink": {
+									"name": "tema_use_percent",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "dema_use_percent",
+									"type": "String",
+									"physicalType": "nvarchar"
+								},
+								"sink": {
+									"name": "dema_use_percent",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "forecast_type",
+									"type": "String",
+									"physicalType": "varchar"
+								},
+								"sink": {
+									"name": "forecast_type",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "placement",
+									"type": "String",
+									"physicalType": "varchar"
+								},
+								"sink": {
+									"name": "placement",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "mfoq_look_forward_window",
+									"type": "String",
+									"physicalType": "nvarchar"
+								},
+								"sink": {
+									"name": "mfoq_look_forward_window",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "mfoq_use_percent",
+									"type": "String",
+									"physicalType": "nvarchar"
+								},
+								"sink": {
+									"name": "mfoq_use_percent",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "on_order_quantity",
+									"type": "String",
+									"physicalType": "nvarchar"
+								},
+								"sink": {
+									"name": "on_order_quantity",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "amazon_pos_forecast",
+									"type": "String",
+									"physicalType": "varchar"
+								},
+								"sink": {
+									"name": "amazon_pos_forecast",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "vendor_central_pos_forecast",
+									"type": "String",
+									"physicalType": "nvarchar"
+								},
+								"sink": {
+									"name": "vendor_central_pos_forecast",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "forecast_input",
+									"type": "String",
+									"physicalType": "varchar"
+								},
+								"sink": {
+									"name": "forecast_input",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "future_promotional_factors",
+									"type": "String",
+									"physicalType": "varchar"
+								},
+								"sink": {
+									"name": "future_promotional_factors",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "future_promo_factor_dates",
+									"type": "String",
+									"physicalType": "varchar"
+								},
+								"sink": {
+									"name": "future_promo_factor_dates",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "in_transit_quantity",
+									"type": "String",
+									"physicalType": "nvarchar"
+								},
+								"sink": {
+									"name": "in_transit_quantity",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "lookback_window",
+									"type": "String",
+									"physicalType": "nvarchar"
+								},
+								"sink": {
+									"name": "lookback_window",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ema_use_percent",
+									"type": "String",
+									"physicalType": "nvarchar"
+								},
+								"sink": {
+									"name": "ema_use_percent",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "shipment_blend_percentage",
+									"type": "String",
+									"physicalType": "nvarchar"
+								},
+								"sink": {
+									"name": "shipment_blend_percentage",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "promotionality_curve_percent",
+									"type": "String",
+									"physicalType": "nvarchar"
+								},
+								"sink": {
+									"name": "promotionality_curve_percent",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "item_type",
+									"type": "String",
+									"physicalType": "varchar"
+								},
+								"sink": {
+									"name": "item_type",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "future_seasonal_factors",
+									"type": "String",
+									"physicalType": "varchar"
+								},
+								"sink": {
+									"name": "future_seasonal_factors",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "category",
+									"type": "String",
+									"physicalType": "varchar"
+								},
+								"sink": {
+									"name": "category",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "sma_use_percent",
+									"type": "String",
+									"physicalType": "nvarchar"
+								},
+								"sink": {
+									"name": "sma_use_percent",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "pos_blend_percentage",
+									"type": "String",
+									"physicalType": "nvarchar"
+								},
+								"sink": {
+									"name": "pos_blend_percentage",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "wma_weights",
+									"type": "String",
+									"physicalType": "varchar"
+								},
+								"sink": {
+									"name": "wma_weights",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "release_type",
+									"type": "String",
+									"physicalType": "varchar"
+								},
+								"sink": {
+									"name": "release_type",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "de_promo_quantity",
+									"type": "String",
+									"physicalType": "varchar"
+								},
+								"sink": {
+									"name": "de_promo_quantity",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "de_promo_and_de_season_quantity",
+									"type": "String",
+									"physicalType": "varchar"
+								},
+								"sink": {
+									"name": "de_promo_and_de_season_quantity",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "sma_forecast",
+									"type": "String",
+									"physicalType": "varchar"
+								},
+								"sink": {
+									"name": "sma_forecast",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "wma_forecast",
+									"type": "String",
+									"physicalType": "varchar"
+								},
+								"sink": {
+									"name": "wma_forecast",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ema_forecast",
+									"type": "String",
+									"physicalType": "varchar"
+								},
+								"sink": {
+									"name": "ema_forecast",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "dema_forecast",
+									"type": "String",
+									"physicalType": "varchar"
+								},
+								"sink": {
+									"name": "dema_forecast",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "tema_forecast",
+									"type": "String",
+									"physicalType": "varchar"
+								},
+								"sink": {
+									"name": "tema_forecast",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "mfoq_forecast",
+									"type": "String",
+									"physicalType": "varchar"
+								},
+								"sink": {
+									"name": "mfoq_forecast",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "combined_and_scaled_forecast",
+									"type": "String",
+									"physicalType": "varchar"
+								},
+								"sink": {
+									"name": "combined_and_scaled_forecast",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "merged_forecast",
+									"type": "String",
+									"physicalType": "varchar"
+								},
+								"sink": {
+									"name": "merged_forecast",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "reseasonalized_forecast",
+									"type": "String",
+									"physicalType": "varchar"
+								},
+								"sink": {
+									"name": "reseasonalized_forecast",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "reseason_and_repromo_forecast",
+									"type": "String",
+									"physicalType": "varchar"
+								},
+								"sink": {
+									"name": "RESEASON_AND_REPROMO_FORECAST_AMOUNT",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "algo_batch_id",
+									"type": "String",
+									"physicalType": "varchar"
+								},
+								"sink": {
+									"name": "algo_batch_id",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "algo_created_date",
+									"type": "String",
+									"physicalType": "nvarchar"
+								},
+								"sink": {
+									"name": "algo_created_date",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_FB_QA_ALGO_APP_DB",
+						"type": "DatasetReference",
+						"parameters": {
+							"TableName": "fcst_pos_forecast_data"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_ALGO_PLUS_FB_EDW_DEV_LAND",
+						"type": "DatasetReference",
+						"parameters": {
+							"SchemaName": "dbo",
+							"TableName": "FACT_ALGO_BASE_LINE_FORECAST_APP"
+						}
+					}
+				]
+			}
+		],
+		"folder": {
+			"name": "Facebook Pipelines"
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-11-07T11:20:33Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

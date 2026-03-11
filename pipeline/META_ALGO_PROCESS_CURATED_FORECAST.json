@@ -1,0 +1,75 @@
+{
+	"name": "META_ALGO_PROCESS_CURATED_FORECAST",
+	"properties": {
+		"activities": [
+			{
+				"name": "ALGO_BASELINE_FORECAST_FILE_UPLOAD",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "ALGO_BASELINE_FORECAST_FILE_UPLOAD",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "FACEBOOK_SEND_FCST_ENGINE_DATA_TO_ALGO_APP_QA_DB",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "ALGO_BASELINE_FORECAST_FILE_UPLOAD",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "FACEBOOK_SEND_FCST_ENGINE_DATA_TO_ALGO_APP_QA_DB",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "FACEBOOK_SEND_FCST_ENGINE_DATA_TO_ALGO_APP_PROD_DB",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "ALGO_BASELINE_FORECAST_FILE_UPLOAD",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "FACEBOOK_SEND_FCST_ENGINE_DATA_TO_ALGO_APP_PROD_DB",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			}
+		],
+		"folder": {
+			"name": "Facebook Pipelines/Meta Algo Forecast Related"
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-11-07T11:25:52Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

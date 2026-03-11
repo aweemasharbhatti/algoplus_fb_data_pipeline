@@ -1,0 +1,25 @@
+{
+	"name": "Meta FC Narrative File Trigger",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Stopped",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "META_FC_NARRATIVE_FILE_UPLOAD",
+					"type": "PipelineReference"
+				}
+			}
+		],
+		"type": "BlobEventsTrigger",
+		"typeProperties": {
+			"blobPathBeginsWith": "/fb-forecast-curation/blobs/algoplus-meta-fc-narrative/input/",
+			"blobPathEndsWith": ".csv",
+			"ignoreEmptyBlobs": false,
+			"scope": "/subscriptions/3b96ccbc-e2f4-47c3-b59a-fe29e5359266/resourceGroups/rg-facebook-sftp/providers/Microsoft.Storage/storageAccounts/sftpstoragefacebook",
+			"events": [
+				"Microsoft.Storage.BlobCreated"
+			]
+		}
+	}
+}

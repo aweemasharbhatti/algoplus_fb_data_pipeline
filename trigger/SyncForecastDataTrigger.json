@@ -1,0 +1,45 @@
+{
+	"name": "SyncForecastDataTrigger",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Stopped",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "FACEBOOK_SYNC_DATA",
+					"type": "PipelineReference"
+				},
+				"parameters": {
+					"ExecutionMode": "Delta"
+				}
+			}
+		],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Day",
+				"interval": 1,
+				"startTime": "2021-09-24T14:40:00Z",
+				"timeZone": "UTC",
+				"schedule": {
+					"hours": [
+						0,
+						2,
+						6,
+						8,
+						10,
+						14,
+						16,
+						18,
+						20,
+						22,
+						11,
+						13,
+						17,
+						21
+					]
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,16 @@
+{
+	"name": "Sql_Server_Facebook_Prod",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureSqlDatabase",
+		"typeProperties": {
+			"connectionString": "integrated security=False;encrypt=True;connection timeout=30;data source=sqlserver-web-facebook-prod.database.windows.net;initial catalog=sqldb-facebook-prod;user id=adfappuserfbprod",
+			"encryptedCredential": "eyJDcmVkZW50aWFsSWQiOiI5ODkyMTJhMC1lMGFhLTQ3OGEtYjUwNi03Mzc5ZjFiYjM0MjkiLCJWZXJzaW9uIjoiMi4wIiwiQ2xhc3NUeXBlIjoiTWljcm9zb2Z0LkRhdGFQcm94eS5Db3JlLkludGVyU2VydmljZURhdGFDb250cmFjdC5DcmVkZW50aWFsU1UwNkNZMTQifQ=="
+		},
+		"connectVia": {
+			"referenceName": "integration-runtime-facebook-dp-new",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

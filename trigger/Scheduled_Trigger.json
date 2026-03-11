@@ -1,0 +1,24 @@
+{
+	"name": "Scheduled_Trigger",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Stopped",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "FACEBOOK_MASTER_PIPELINE",
+					"type": "PipelineReference"
+				}
+			}
+		],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Minute",
+				"interval": 30,
+				"startTime": "2022-09-29T09:30:00",
+				"timeZone": "Pakistan Standard Time"
+			}
+		}
+	}
+}

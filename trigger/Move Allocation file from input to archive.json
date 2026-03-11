@@ -1,0 +1,24 @@
+{
+	"name": "Move Allocation file from input to archive",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Started",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "Delete_allocation_and_landed_supply_file",
+					"type": "PipelineReference"
+				}
+			}
+		],
+		"type": "BlobEventsTrigger",
+		"typeProperties": {
+			"blobPathBeginsWith": "/fb-algoplus-dev/blobs/Input/",
+			"ignoreEmptyBlobs": true,
+			"scope": "/subscriptions/3b96ccbc-e2f4-47c3-b59a-fe29e5359266/resourceGroups/rg-facebook-sftp/providers/Microsoft.Storage/storageAccounts/sftpstoragefacebook",
+			"events": [
+				"Microsoft.Storage.BlobCreated"
+			]
+		}
+	}
+}

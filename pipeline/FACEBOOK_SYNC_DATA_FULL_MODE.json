@@ -1,0 +1,192 @@
+{
+	"name": "FACEBOOK_SYNC_DATA_FULL_MODE",
+	"properties": {
+		"activities": [
+			{
+				"name": "FACEBOOK_GET_FCST_DATA_FROM_ALGO_PLUS_APP_PRODUCTION_DB",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Truncate Table",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "FACEBOOK_GET_FCST_DATA_FROM_ALGO_PLUS_APP_PROD_DB",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"ExecutionMode": {
+							"value": "@pipeline().parameters.ExecutionMode",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "FACEBOOK_PROCESS_FORECAST_TABULAR_MODEL",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Execute SP_LOAD_FACT_INVENTORY_PLANS",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "FACEBOOK_PROCESS_FORECAST_TABULAR_MODEL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "FB_SYNC_PIPELINE_FAILURE_EMAIL",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "FACEBOOK_GET_FCST_DATA_FROM_ALGO_PLUS_APP_PRODUCTION_DB",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "FB_SYNC_PIPELINE_FAILURE_EMAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "FB_SYNC_PIPELINE_FAILURE_EMAIL_1",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "FACEBOOK_PROCESS_FORECAST_TABULAR_MODEL",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "FB_SYNC_PIPELINE_FAILURE_EMAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Execute SP_LOAD_FACT_INVENTORY_PLANS",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "FACEBOOK_GET_FCST_DATA_FROM_ALGO_PLUS_APP_PRODUCTION_DB",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dbo].[SP_LOAD_FACT_INVENTORY_PLANS]"
+				},
+				"linkedServiceName": {
+					"referenceName": "Aglo_Plus_FB_EDW_SqlServer_DEV",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "Truncate Table",
+				"type": "Script",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "Aglo_Plus_FB_EDW_SqlServer_DEV",
+					"type": "LinkedServiceReference"
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "Query",
+							"text": "truncate table FB_Forecast_MASTER_APP;"
+						}
+					]
+				}
+			},
+			{
+				"name": "FB_SYNC_PIPELINE_FAILURE_EMAIL_2",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Execute SP_LOAD_FACT_INVENTORY_PLANS",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "FB_SYNC_PIPELINE_FAILURE_EMAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			}
+		],
+		"parameters": {
+			"ExecutionMode": {
+				"type": "string",
+				"defaultValue": "Full"
+			}
+		},
+		"folder": {
+			"name": "Facebook Pipelines"
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-11-21T10:17:22Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

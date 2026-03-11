@@ -1,0 +1,108 @@
+{
+	"name": "FACEBOOK_SEND_FCST_ENGINE_DATA_TO_ALGO_APP_QA_DB",
+	"properties": {
+		"activities": [
+			{
+				"name": "Copy fcst_pos_forecast_data Data EDW",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "SqlServerSink",
+						"preCopyScript": {
+							"value": "IF OBJECT_ID(N'dbo.FACT_ALGO_BASELINE_FORECAST_EDW', N'U') IS NOT NULL  \nTRUNCATE TABLE dbo.FACT_ALGO_BASELINE_FORECAST_EDW;\n\nIF OBJECT_ID(N'dbo.fcst_pos_forecast_data', N'U') IS NOT NULL \nTRUNCATE TABLE dbo.fcst_pos_forecast_data;",
+							"type": "Expression"
+						},
+						"writeBehavior": "insert",
+						"tableOption": "autoCreate"
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_ALGO_PLUS_FB_EDW_DEV_LAND",
+						"type": "DatasetReference",
+						"parameters": {
+							"SchemaName": "stg",
+							"TableName": "FACT_ALGO_BASELINE_FORECAST"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_FB_QA_ALGO_APP_DB",
+						"type": "DatasetReference",
+						"parameters": {
+							"TableName": "FACT_ALGO_BASELINE_FORECAST_EDW"
+						}
+					}
+				]
+			},
+			{
+				"name": "UpdateAppTable",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "Copy fcst_pos_forecast_data Data EDW",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderQuery": {
+							"value": "insert into fcst_pos_forecast_data (itemid, Channelid, Calendarid, [seasonality_type],[toolbox_forecast_type],[customer_code],[item_code],[week_date],[week_number],[lookback_window],\n[reseason_and_repromo_forecast],[algo_created_date])\nselect im.itemManagerId itemid, ic.ItemAccountId Channelid, c.CalendarId Calendarid,\n [seasonality_type],[toolbox_forecast_type],[customer_code],[item_code],[week_date],'0',7,[reseason_and_repromo_forecast],getdate()\nfrom [dbo].FACT_ALGO_BASELINE_FORECAST_EDW fs\ninner join itemaccount ic WITH (NOLOCK) on ic.AccountName = fs.customer_code\ninner join itemmanager im  WITH (NOLOCK) on im.SKU = fs.item_code\ninner join calendar c WITH (NOLOCK) on DATEADD(DD,-6,c.WeekStartDate) = CAST(fs.week_date AS Date);\nselect 1;\n",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "DS_FB_QA_ALGO_APP_DB",
+						"type": "DatasetReference",
+						"parameters": {
+							"TableName": "FACT_ALGO_BASELINE_FORECAST_EDW"
+						}
+					}
+				}
+			}
+		],
+		"folder": {
+			"name": "Facebook Pipelines"
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-11-07T11:20:33Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

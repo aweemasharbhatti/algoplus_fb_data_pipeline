@@ -1,0 +1,513 @@
+{
+	"name": "TestMissingDataFillPipeLine",
+	"properties": {
+		"activities": [
+			{
+				"name": "Notebook_Fill_Missing_Dates",
+				"type": "DatabricksNotebook",
+				"dependsOn": [
+					{
+						"activity": "Copy From SQL",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebookPath": "/Users/muddaser.talal@algo.com//SourceDataFix/datafill",
+					"baseParameters": {
+						"input_file_name": {
+							"value": "@pipeline().parameters.source_file",
+							"type": "Expression"
+						},
+						"source_file_path": {
+							"value": "@pipeline().parameters.source_folder",
+							"type": "Expression"
+						},
+						"target_file": {
+							"value": "@pipeline().parameters.target_file",
+							"type": "Expression"
+						},
+						"target_folder": {
+							"value": "@pipeline().parameters.target_folder",
+							"type": "Expression"
+						},
+						"holiday_perct": {
+							"value": "@pipeline().parameters.holiday_perct",
+							"type": "Expression"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureDatabrickslinkserviceUpdated",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"clusterType": {
+							"value": "@pipeline().parameters.cluster_type",
+							"type": "Expression"
+						},
+						"workerNode": {
+							"value": "@pipeline().parameters.worker_node",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Copy To SQL",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Notebook_Fill_Missing_Dates",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"wildcardFolderPath": {
+								"value": "@concat(pipeline().parameters.target_folder,'/',pipeline().parameters.target_file)",
+								"type": "Expression"
+							},
+							"wildcardFileName": "*.csv",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"sink": {
+						"type": "AzureSqlSink",
+						"preCopyScript": {
+							"value": "@{concat('truncate table ',pipeline().parameters.target_schema,'.',pipeline().parameters.target_table)}",
+							"type": "Expression"
+						},
+						"writeBehavior": "insert",
+						"sqlWriterUseTableLock": false,
+						"disableMetricsCollection": false
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "ITEM_ACCOUNT_KEY",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "ITEM_ACCOUNT_KEY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "item_key",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "ITEM_KEY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SKU",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "SKU",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PRODUCT_NAME",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "PRODUCT_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "RETAILER",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "RETAILER",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "RETAILER_SFID",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "RETAILER_SFID",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "RETAILER_KEY",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "RETAILER_KEY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "COUNTRY_CODE",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "COUNTRY_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "WEEK_START_DATE",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "WEEK_START_DATE",
+									"type": "DateTime",
+									"physicalType": "date"
+								}
+							},
+							{
+								"source": {
+									"name": "WEEK_END_DATE",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "WEEK_END_DATE",
+									"type": "DateTime",
+									"physicalType": "date"
+								}
+							},
+							{
+								"source": {
+									"name": "WEEK_END_DATE_KEY",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "WEEK_END_DATE_KEY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "WEEK_NUMBER",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "WEEK_NUMBER",
+									"type": "Int32",
+									"physicalType": "int"
+								}
+							},
+							{
+								"source": {
+									"name": "SELL_IN",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "SELL_IN",
+									"type": "Int32",
+									"physicalType": "int"
+								}
+							},
+							{
+								"source": {
+									"name": "SELL_THROUGH",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "SELL_THROUGH",
+									"type": "Int32",
+									"physicalType": "int"
+								}
+							},
+							{
+								"source": {
+									"name": "PROMOTION_KEY",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "PROMOTION_KEY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PROMO_DAYS",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "PROMO_DAYS",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTACH_AMOUNT",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "ATTACH_AMOUNT",
+									"type": "Double",
+									"physicalType": "float"
+								}
+							},
+							{
+								"source": {
+									"name": "promo_week",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "PROMO_WEEK",
+									"type": "Int32",
+									"physicalType": "int"
+								}
+							},
+							{
+								"source": {
+									"name": "holiday_flg",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "holiday_flg",
+									"type": "Int32",
+									"physicalType": "int"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "CSVSinkDatasetDev",
+						"type": "DatasetReference",
+						"parameters": {
+							"folder": {
+								"value": "@pipeline().parameters.target_folder",
+								"type": "Expression"
+							},
+							"file": {
+								"value": "@pipeline().parameters.target_file",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "AzureSqlDBDEV",
+						"type": "DatasetReference",
+						"parameters": {
+							"schema": {
+								"value": "@pipeline().parameters.target_schema",
+								"type": "Expression"
+							},
+							"table": {
+								"value": "@pipeline().parameters.target_table",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "Copy From SQL",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": {
+							"value": "@concat('select * from ',pipeline().parameters.source_schema,'.',pipeline().parameters.depromo_table,'  where week_start_date is not null and week_end_date is not null')",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "DelimitedTextSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextWriteSettings",
+							"quoteAllText": true,
+							"fileExtension": ".txt"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "AzureSqlDBDEV",
+						"type": "DatasetReference",
+						"parameters": {
+							"schema": {
+								"value": "@pipeline().parameters.source_schema",
+								"type": "Expression"
+							},
+							"table": {
+								"value": "@pipeline().parameters.depromo_table",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "CSVSinkDatasetDev",
+						"type": "DatasetReference",
+						"parameters": {
+							"folder": {
+								"value": "@pipeline().parameters.source_folder",
+								"type": "Expression"
+							},
+							"file": {
+								"value": "@pipeline().parameters.source_file",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			}
+		],
+		"parameters": {
+			"source_folder": {
+				"type": "string",
+				"defaultValue": "Factsale"
+			},
+			"source_file": {
+				"type": "string",
+				"defaultValue": "Factsale.csv"
+			},
+			"target_folder": {
+				"type": "string",
+				"defaultValue": "Factsale/output"
+			},
+			"target_file": {
+				"type": "string",
+				"defaultValue": "FactsaleOut.csv"
+			},
+			"target_table": {
+				"type": "string",
+				"defaultValue": "v_fact_sale_depromo"
+			},
+			"target_schema": {
+				"type": "string",
+				"defaultValue": "engine"
+			},
+			"cluster_type": {
+				"type": "string",
+				"defaultValue": "Standard_DS3_v2"
+			},
+			"worker_node": {
+				"type": "string",
+				"defaultValue": "2"
+			},
+			"depromo_table": {
+				"type": "string",
+				"defaultValue": "v_fact_sale_depromo_raw"
+			},
+			"source_schema": {
+				"type": "string",
+				"defaultValue": "engine"
+			},
+			"holiday_perct": {
+				"type": "string",
+				"defaultValue": "180"
+			}
+		},
+		"folder": {
+			"name": "MuddaserTalal"
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-07-26T15:36:53Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

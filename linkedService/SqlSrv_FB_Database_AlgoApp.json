@@ -1,0 +1,16 @@
+{
+	"name": "SqlSrv_FB_Database_AlgoApp",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "SqlServer",
+		"typeProperties": {
+			"connectionString": "integrated security=False;data source=srv-db-algoplus-db.database.windows.net;initial catalog=algodbfbqa;user id=adfappuserfbqa",
+			"encryptedCredential": "eyJDcmVkZW50aWFsSWQiOiIxOTY5NWI5NC02YTVlLTQzMDUtOGQ1NS1kMzkyYzQ0ZTYzZjIiLCJWZXJzaW9uIjoiMi4wIiwiQ2xhc3NUeXBlIjoiTWljcm9zb2Z0LkRhdGFQcm94eS5Db3JlLkludGVyU2VydmljZURhdGFDb250cmFjdC5DcmVkZW50aWFsU1UwNkNZMTQifQ=="
+		},
+		"connectVia": {
+			"referenceName": "integration-runtime-facebook-dp-new",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

@@ -1,0 +1,125 @@
+{
+	"name": "ds_sqldb_dataplatform_general_edw_dev",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "sqldb_dataplatform_general_edw_dev",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"schema": {
+				"type": "string",
+				"defaultValue": "@dataset().schema"
+			},
+			"table": {
+				"type": "string",
+				"defaultValue": "@dataset().table"
+			}
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "ITEM_KEY",
+				"type": "nvarchar"
+			},
+			{
+				"name": "SKU",
+				"type": "nvarchar"
+			},
+			{
+				"name": "PRODUCT_DESCRIPTION",
+				"type": "nvarchar"
+			},
+			{
+				"name": "Brand",
+				"type": "nvarchar"
+			},
+			{
+				"name": "PRODUCT_GROUP",
+				"type": "nvarchar"
+			},
+			{
+				"name": "product_family",
+				"type": "nvarchar"
+			},
+			{
+				"name": "parent_product",
+				"type": "nvarchar"
+			},
+			{
+				"name": "PRODUCT_STATUS",
+				"type": "nvarchar"
+			},
+			{
+				"name": "PRODUCT_CATEGORY",
+				"type": "nvarchar"
+			},
+			{
+				"name": "MSRP",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 4
+			},
+			{
+				"name": "COST",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 4
+			},
+			{
+				"name": "COLOR",
+				"type": "nvarchar"
+			},
+			{
+				"name": "CAPACITY",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "SCREEN_SIZE",
+				"type": "nvarchar"
+			},
+			{
+				"name": "STREET_DATE",
+				"type": "datetime2",
+				"scale": 0
+			},
+			{
+				"name": "ACCY_TYPE",
+				"type": "nvarchar"
+			},
+			{
+				"name": "LAST_SOLD_WEEK_END_DATE",
+				"type": "date"
+			},
+			{
+				"name": "LAST_SOLD_WEEK_NO",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "SKU_IN_HISTORIC_SALES",
+				"type": "nvarchar"
+			},
+			{
+				"name": "MSRP_CURRENCY",
+				"type": "varchar"
+			},
+			{
+				"name": "Active",
+				"type": "bit"
+			}
+		],
+		"typeProperties": {
+			"schema": {
+				"value": "@dataset().schema",
+				"type": "Expression"
+			},
+			"table": {
+				"value": "@dataset().table",
+				"type": "Expression"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

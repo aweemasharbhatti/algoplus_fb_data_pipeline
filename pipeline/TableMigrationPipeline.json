@@ -1,0 +1,107 @@
+{
+	"name": "TableMigrationPipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "ForEach1",
+				"type": "ForEach",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@variables('tablelist')",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Copy data1",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "AzureSqlSource",
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"sink": {
+									"type": "AzureSqlSink",
+									"writeBehavior": "insert",
+									"sqlWriterUseTableLock": false,
+									"tableOption": "autoCreate",
+									"disableMetricsCollection": false
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "AzureSqlTableMigration",
+									"type": "DatasetReference",
+									"parameters": {
+										"schema": "dbo",
+										"table": {
+											"value": "@item()",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "AzureSqlTableMigrationDest",
+									"type": "DatasetReference",
+									"parameters": {
+										"schema": "dbo",
+										"table": {
+											"value": "@concat(item(),'_test')",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"variables": {
+			"tablelist": {
+				"type": "Array",
+				"defaultValue": [
+					"fbforecast",
+					"fbforecast_Master",
+					"RP_Fbforecast",
+					"IDR_fbforecast",
+					"DR_FBforecast",
+					"GP_Measure",
+					"DR_Measure",
+					"IDR_Measure",
+					"RP_Measure",
+					"CP_Measure",
+					"measure"
+				]
+			}
+		},
+		"folder": {
+			"name": "MuddaserTalal"
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-06-14T13:48:13Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

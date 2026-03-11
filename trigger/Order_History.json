@@ -1,0 +1,46 @@
+{
+	"name": "Order_History",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Stopped",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "Delete_OrderHistory_file",
+					"type": "PipelineReference"
+				},
+				"parameters": {
+					"FileName": "facebook_e2open.BIN.b2b_order_history_"
+				}
+			}
+		],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Day",
+				"interval": 1,
+				"startTime": "2023-05-30T22:04:00",
+				"timeZone": "Pakistan Standard Time",
+				"schedule": {
+					"minutes": [
+						27,
+						57
+					],
+					"hours": [
+						3,
+						4,
+						5,
+						6,
+						7,
+						8,
+						9,
+						10,
+						11,
+						12,
+						13
+					]
+				}
+			}
+		}
+	}
+}

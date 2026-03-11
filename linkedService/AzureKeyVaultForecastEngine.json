@@ -1,0 +1,11 @@
+{
+	"name": "AzureKeyVaultForecastEngine",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureKeyVault",
+		"typeProperties": {
+			"baseUrl": "https://eus-qa-play-oneview-kv.vault.azure.net/"
+		}
+	}
+}

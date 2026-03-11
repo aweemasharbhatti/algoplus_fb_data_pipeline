@@ -1,0 +1,47 @@
+{
+	"name": "DS_Demo_SqlServerTable",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "Demo Database SqlServer",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"ServerName": {
+					"value": "algoplusbbydesql.database.windows.net",
+					"type": "Expression"
+				},
+				"DatabaseName": {
+					"value": "@dataset().DemoDatabaseName",
+					"type": "Expression"
+				}
+			}
+		},
+		"parameters": {
+			"SchemaName": {
+				"type": "string",
+				"defaultValue": "dbo"
+			},
+			"TableName": {
+				"type": "string",
+				"defaultValue": "Screen"
+			},
+			"DemoDatabaseName": {
+				"type": "string",
+				"defaultValue": "AlgoPlusDevMerged"
+			}
+		},
+		"annotations": [],
+		"type": "SqlServerTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": {
+				"value": "@dataset().SchemaName",
+				"type": "Expression"
+			},
+			"table": {
+				"value": "@dataset().TableName",
+				"type": "Expression"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

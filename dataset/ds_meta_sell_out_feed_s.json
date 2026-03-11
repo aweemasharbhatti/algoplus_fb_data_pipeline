@@ -1,0 +1,56 @@
+{
+	"name": "ds_meta_sell_out_feed_s",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureBlobStorage",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Excel",
+		"typeProperties": {
+			"sheetName": "daiquery-Sell Out for Algo-2022",
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": "Sell Out Feed -  06222022.xlsx",
+				"folderPath": "fb-sell-out-feed-incoming-file/input",
+				"container": "fb-algoplus-dev"
+			},
+			"firstRowAsHeader": true
+		},
+		"schema": [
+			{
+				"name": "distributor",
+				"type": "String"
+			},
+			{
+				"name": "distributor_sfid",
+				"type": "String"
+			},
+			{
+				"name": "invoice_date",
+				"type": "String"
+			},
+			{
+				"name": "validated_sku_code",
+				"type": "String"
+			},
+			{
+				"name": "bill_to_customer_name",
+				"type": "String"
+			},
+			{
+				"name": "retailer",
+				"type": "String"
+			},
+			{
+				"name": "retailer_sfid",
+				"type": "String"
+			},
+			{
+				"name": "sales_qty",
+				"type": "String"
+			}
+		]
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

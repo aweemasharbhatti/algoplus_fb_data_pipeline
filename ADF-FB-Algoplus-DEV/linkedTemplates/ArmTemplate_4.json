@@ -13,6 +13,289 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/TestPromoCalenderPipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Notebook_Promo",
+						"type": "DatabricksNotebook",
+						"dependsOn": [
+							{
+								"activity": "Copy From SQL",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Users/muddaser.talal@algo.com/promocalendar/promocalendar",
+							"baseParameters": {
+								"input_file_name": {
+									"value": "@pipeline().parameters.source_file",
+									"type": "Expression"
+								},
+								"source_file_path": {
+									"value": "@pipeline().parameters.source_folder",
+									"type": "Expression"
+								},
+								"target_file": {
+									"value": "@pipeline().parameters.target_file",
+									"type": "Expression"
+								},
+								"target_folder": {
+									"value": "@pipeline().parameters.target_folder",
+									"type": "Expression"
+								},
+								"prev_folder": {
+									"value": "@pipeline().parameters.prev_folder",
+									"type": "Expression"
+								},
+								"prev_file": {
+									"value": "@pipeline().parameters.prev_file",
+									"type": "Expression"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "AzureDatabrickslinkserviceUpdated",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"clusterType": {
+									"value": "@pipeline().parameters.cluster_type",
+									"type": "Expression"
+								},
+								"workerNode": {
+									"value": "@pipeline().parameters.worker_node",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "Copy To SQL",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Notebook_Promo",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"wildcardFolderPath": {
+										"value": "@concat(pipeline().parameters.target_folder,'/',pipeline().parameters.target_file)",
+										"type": "Expression"
+									},
+									"wildcardFileName": "*.csv",
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "AzureSqlSink",
+								"preCopyScript": {
+									"value": "@{concat('delete from ',pipeline().parameters.target_schema,'.',pipeline().parameters.target_table)}",
+									"type": "Expression"
+								},
+								"tableOption": "autoCreate",
+								"disableMetricsCollection": false
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "CSVSinkDatasetDev",
+								"type": "DatasetReference",
+								"parameters": {
+									"folder": {
+										"value": "@pipeline().parameters.target_folder",
+										"type": "Expression"
+									},
+									"file": {
+										"value": "@pipeline().parameters.target_file",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "AzureSqlDBDEV",
+								"type": "DatasetReference",
+								"parameters": {
+									"schema": {
+										"value": "@pipeline().parameters.target_schema",
+										"type": "Expression"
+									},
+									"table": {
+										"value": "@pipeline().parameters.target_table",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					},
+					{
+						"name": "Copy From SQL",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".txt"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "AzureSqlDBDEV",
+								"type": "DatasetReference",
+								"parameters": {
+									"schema": {
+										"value": "@pipeline().parameters.target_schema",
+										"type": "Expression"
+									},
+									"table": {
+										"value": "@pipeline().parameters.target_folder",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "CSVSinkDatasetDev",
+								"type": "DatasetReference",
+								"parameters": {
+									"folder": {
+										"value": "@pipeline().parameters.prev_folder",
+										"type": "Expression"
+									},
+									"file": {
+										"value": "@pipeline().parameters.prev_file",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"source_folder": {
+						"type": "string",
+						"defaultValue": "promocalendar"
+					},
+					"source_file": {
+						"type": "string",
+						"defaultValue": "facebookpromo_test.csv"
+					},
+					"target_folder": {
+						"type": "string",
+						"defaultValue": "promocalendar/output"
+					},
+					"target_file": {
+						"type": "string",
+						"defaultValue": "facebookpromo.csv"
+					},
+					"target_table": {
+						"type": "string",
+						"defaultValue": "promotemp"
+					},
+					"target_schema": {
+						"type": "string",
+						"defaultValue": "dbo"
+					},
+					"cluster_type": {
+						"type": "string",
+						"defaultValue": "Standard_DS3_v2"
+					},
+					"worker_node": {
+						"type": "string",
+						"defaultValue": "2"
+					},
+					"prev_folder": {
+						"type": "string",
+						"defaultValue": "promocalendar/prevoutput"
+					},
+					"prev_file": {
+						"type": "string",
+						"defaultValue": "prev_promo.csv"
+					}
+				},
+				"folder": {
+					"name": "MuddaserTalal"
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-02-14T08:35:14Z"
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/TestSeasonalityIndexPipeline')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -1808,223 +2091,6 @@
 						"type": "Expression"
 					}
 				}
-			},
-			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/Master_Forecast_Run')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"description": "Master Pipeline for Forecast",
-				"activities": [
-					{
-						"name": "GetForecastConfigs",
-						"description": "read configs from DB table",
-						"type": "Lookup",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"source": {
-								"type": "AzureSqlSource",
-								"queryTimeout": "02:00:00",
-								"partitionOption": "None"
-							},
-							"dataset": {
-								"referenceName": "AzureSQLDynamic",
-								"type": "DatasetReference",
-								"parameters": {
-									"server": "sqlserver-dataplatform-general-dev.database.windows.net",
-									"schema": "engine",
-									"table": "ForecastPipelineConfig",
-									"DB": "dwh-meta-dev",
-									"User": "sqladmin",
-									"Password": "sCSmjvUoFIhEh2S"
-								}
-							},
-							"firstRowOnly": false
-						}
-					},
-					{
-						"name": "Set ForecastConfigs",
-						"type": "SetVariable",
-						"dependsOn": [
-							{
-								"activity": "GetForecastConfigs",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"variableName": "ConfigValues",
-							"value": {
-								"value": "@activity('GetForecastConfigs').output.value",
-								"type": "Expression"
-							}
-						}
-					},
-					{
-						"name": "check forecast run is enable",
-						"type": "IfCondition",
-						"dependsOn": [
-							{
-								"activity": "Set ForecastConfigs",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"expression": {
-								"value": "@activity('GetForecastConfigs').output.value[0].IsForecastRun",
-								"type": "Expression"
-							},
-							"ifTrueActivities": [
-								{
-									"name": "Copy data",
-									"type": "Copy",
-									"dependsOn": [],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"source": {
-											"type": "AzureSqlSource",
-											"sqlReaderStoredProcedureName": "[[engine].[ForecastpipelineData]",
-											"storedProcedureParameters": {
-												"PforecastKey": {
-													"type": "String",
-													"value": {
-														"value": "@activity('GetForecastConfigs').output.value[0].Forecast_Key",
-														"type": "Expression"
-													}
-												}
-											},
-											"queryTimeout": "02:00:00",
-											"partitionOption": "None"
-										},
-										"sink": {
-											"type": "DelimitedTextSink",
-											"storeSettings": {
-												"type": "AzureBlobFSWriteSettings"
-											},
-											"formatSettings": {
-												"type": "DelimitedTextWriteSettings",
-												"quoteAllText": true,
-												"fileExtension": ".txt"
-											}
-										},
-										"enableStaging": false,
-										"translator": {
-											"type": "TabularTranslator",
-											"typeConversion": true,
-											"typeConversionSettings": {
-												"allowDataTruncation": true,
-												"treatBooleanAsNumber": false
-											}
-										}
-									},
-									"inputs": [
-										{
-											"referenceName": "AzureSQLDynamic",
-											"type": "DatasetReference",
-											"parameters": {
-												"server": {
-													"value": "@activity('GetForecastConfigs').output.value[0].ServerName",
-													"type": "Expression"
-												},
-												"schema": {
-													"value": "@activity('GetForecastConfigs').output.value[0].TargetSchema",
-													"type": "Expression"
-												},
-												"table": "temp",
-												"DB": {
-													"value": "@activity('GetForecastConfigs').output.value[0].DB",
-													"type": "Expression"
-												},
-												"User": {
-													"value": "@activity('GetForecastConfigs').output.value[0].UserName",
-													"type": "Expression"
-												},
-												"Password": {
-													"value": "@activity('GetForecastConfigs').output.value[0].Password",
-													"type": "Expression"
-												}
-											}
-										}
-									],
-									"outputs": [
-										{
-											"referenceName": "CSVSinkDatasetV2",
-											"type": "DatasetReference",
-											"parameters": {
-												"folder": {
-													"value": "@concat(activity('GetForecastConfigs').output.value[0].Output_Path,'/',activity('GetForecastConfigs').output.value[0].Forecast_Key)",
-													"type": "Expression"
-												},
-												"file": {
-													"value": "@activity('GetForecastConfigs').output.value[0].File_Name",
-													"type": "Expression"
-												},
-												"conatiner": {
-													"value": "@activity('GetForecastConfigs').output.value[0].ClientName",
-													"type": "Expression"
-												}
-											}
-										}
-									]
-								}
-							]
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"variables": {
-					"ConfigValues": {
-						"type": "Array"
-					},
-					"ForecastMethod": {
-						"type": "String",
-						"defaultValue": "SMA"
-					},
-					"FromWeek": {
-						"type": "String"
-					},
-					"ToWeek": {
-						"type": "String"
-					},
-					"FixLookbackWeeks": {
-						"type": "Boolean"
-					},
-					"TimePeriod": {
-						"type": "String"
-					}
-				},
-				"folder": {
-					"name": "poc fcst zaheer"
-				},
-				"annotations": []
 			},
 			"dependsOn": []
 		},

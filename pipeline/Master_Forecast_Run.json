@@ -218,7 +218,10 @@
 							"type": "Datetime"
 						},
 						"PforecastFromWeek": {
-							"value": "@activity('GetForecastConfigs').output.value[0].FromWeek",
+							"value": {
+								"value": "@activity('GetForecastConfigs').output.value[0].FromWeek",
+								"type": "Expression"
+							},
 							"type": "Datetime"
 						},
 						"PforecastWeekPeriodId": {
@@ -238,6 +241,16 @@
 								"type": "Expression"
 							},
 							"type": "String"
+						},
+						"PCurrentUserId": {
+							"value": "1",
+							"type": "Int32"
+						},
+						"PForecastProductHierarchyType": {
+							"value": null
+						},
+						"PLookBackWeekWeightTypes": {
+							"value": null
 						}
 					}
 				},

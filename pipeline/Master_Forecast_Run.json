@@ -66,7 +66,7 @@
 				"type": "IfCondition",
 				"dependsOn": [
 					{
-						"activity": "Set ForecastConfigs",
+						"activity": "Generate fsct ItemAccount Combinations",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -179,6 +179,89 @@
 							]
 						}
 					]
+				}
+			},
+			{
+				"name": "Generate fsct ItemAccount Combinations",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "Set ForecastConfigs",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[engine].[ForecastManagerInsert_ZA_11Mar26]",
+					"storedProcedureParameters": {
+						"PlookbackFromWeek": {
+							"value": {
+								"value": "@activity('GetForecastConfigs').output.value[0].FromWeek",
+								"type": "Expression"
+							},
+							"type": "Int32"
+						},
+						"PlookbackToWeek": {
+							"value": {
+								"value": "@activity('GetForecastConfigs').output.value[0].ToWeek",
+								"type": "Expression"
+							},
+							"type": "Datetime"
+						},
+						"PforecastFromWeek": {
+							"value": "@activity('GetForecastConfigs').output.value[0].FromWeek",
+							"type": "Datetime"
+						},
+						"PforecastWeekPeriodId": {
+							"value": {
+								"value": "@activity('GetForecastConfigs').output.value[0].PeriodId",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"Padjustment": {
+							"value": "0.0",
+							"type": "Decimal"
+						},
+						"PForecastMethod": {
+							"value": {
+								"value": "@activity('GetForecastConfigs').output.value[0].Forecast_Type",
+								"type": "Expression"
+							},
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureSQLparameterizedLink",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"server": {
+							"value": "@activity('GetForecastConfigs').output.value[0].ServerName",
+							"type": "Expression"
+						},
+						"DB": {
+							"value": "@activity('GetForecastConfigs').output.value[0].DB",
+							"type": "Expression"
+						},
+						"user": {
+							"value": "@activity('GetForecastConfigs').output.value[0].UserName",
+							"type": "Expression"
+						},
+						"password": {
+							"value": "@activity('GetForecastConfigs').output.value[0].Password",
+							"type": "Expression"
+						}
+					}
 				}
 			}
 		],

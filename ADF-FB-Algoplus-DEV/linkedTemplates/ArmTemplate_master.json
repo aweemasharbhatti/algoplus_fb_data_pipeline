@@ -1,0 +1,404 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "ADF-FB-Algoplus-DEV"
+		},
+		"Aglo_Plus_FB_EDW_SqlServer_DEV_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'Aglo_Plus_FB_EDW_SqlServer_DEV'"
+		},
+		"AlgoFBDBQATableMigration_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'AlgoFBDBQATableMigration'"
+		},
+		"AlgoTableMigrationDest_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'AlgoTableMigrationDest'"
+		},
+		"AzureBlobStorage_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'AzureBlobStorage'"
+		},
+		"AzureBlobStorage1_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'AzureBlobStorage1'"
+		},
+		"AzureDatabricksLinkService_New_accessToken": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accessToken' of 'AzureDatabricksLinkService_New'"
+		},
+		"AzureSQLparameterizedLink_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'AzureSQLparameterizedLink'",
+			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=@{linkedService().server};Initial Catalog=@{linkedService().DB};User ID=@{linkedService().user};Password=@{linkedService().password}"
+		},
+		"AzureSqlDatabase_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'AzureSqlDatabase'"
+		},
+		"AzureSqlDatabaseSecondDb_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'AzureSqlDatabaseSecondDb'"
+		},
+		"AzureSqlDatabase_dev_prod_replica_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'AzureSqlDatabase_dev_prod_replica'"
+		},
+		"DS_BLOB_ARCHIVE_EXCEL_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'DS_BLOB_ARCHIVE_EXCEL'"
+		},
+		"Demo Database SqlServer_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'Demo Database SqlServer'"
+		},
+		"LandingDataLake_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'LandingDataLake'"
+		},
+		"LandingDatalakeDev_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'LandingDatalakeDev'"
+		},
+		"Meta Database SqlServer_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'Meta Database SqlServer'"
+		},
+		"SqlServer_Web_Facebook_AlgoApp_Production_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'SqlServer_Web_Facebook_AlgoApp_Production'"
+		},
+		"SqlSrv_FB_Database_AlgoApp_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'SqlSrv_FB_Database_AlgoApp'"
+		},
+		"Sql_Server_Facebook_Prod_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'Sql_Server_Facebook_Prod'"
+		},
+		"sqldb_dataplatform_general_edw_dev_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'sqldb_dataplatform_general_edw_dev'",
+			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=sqlserver-dataplatform-general-dev.database.windows.net;Initial Catalog=dwh-meta-qa"
+		},
+		"sqlserver_dataplatform_general_dev_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'sqlserver_dataplatform_general_dev'",
+			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=sqlserver-dataplatform-general-dev.database.windows.net;Initial Catalog=dwh-meta-qa"
+		},
+		"sqlserver_web_play_uat_database_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'sqlserver_web_play_uat_database'",
+			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=sqlserver-web-play-uat.database.windows.net;Initial Catalog=dwh-meta-uat"
+		},
+		"AzureDatabricksLinkService_New_properties_typeProperties_existingClusterId": {
+			"type": "string",
+			"defaultValue": "0217-111924-6d6694f6"
+		},
+		"AzureKeyVaultForecastEngine_properties_typeProperties_baseUrl": {
+			"type": "string",
+			"defaultValue": "https://eus-qa-play-oneview-kv.vault.azure.net/"
+		},
+		"AzureSQLDynamicLinkService_properties_typeProperties_connectionString_secretName": {
+			"type": "string",
+			"defaultValue": "@linkedService().secretname"
+		},
+		"LandingDataLake_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://datalakesynapfacebook.dfs.core.windows.net"
+		},
+		"LandingDatalakeDev_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://saplayforecastenginedev.dfs.core.windows.net"
+		},
+		"Copy meta files from dev to prod blob storage_properties_typeProperties_scope": {
+			"type": "string",
+			"defaultValue": "/subscriptions/3b96ccbc-e2f4-47c3-b59a-fe29e5359266/resourceGroups/rg-facebook-sftp/providers/Microsoft.Storage/storageAccounts/sftpstoragefacebook"
+		},
+		"Meta FC Narrative File Trigger_properties_typeProperties_scope": {
+			"type": "string",
+			"defaultValue": "/subscriptions/3b96ccbc-e2f4-47c3-b59a-fe29e5359266/resourceGroups/rg-facebook-sftp/providers/Microsoft.Storage/storageAccounts/sftpstoragefacebook"
+		},
+		"Meta Sell Out Feed File Trigger_properties_typeProperties_scope": {
+			"type": "string",
+			"defaultValue": "/subscriptions/3b96ccbc-e2f4-47c3-b59a-fe29e5359266/resourceGroups/rg-facebook-sftp/providers/Microsoft.Storage/storageAccounts/sftpstoragefacebook"
+		},
+		"Move Allocation file from input to archive_properties_typeProperties_scope": {
+			"type": "string",
+			"defaultValue": "/subscriptions/3b96ccbc-e2f4-47c3-b59a-fe29e5359266/resourceGroups/rg-facebook-sftp/providers/Microsoft.Storage/storageAccounts/sftpstoragefacebook"
+		},
+		"Order_History_properties_Delete_OrderHistory_file_parameters_FileName": {
+			"type": "string",
+			"defaultValue": "facebook_e2open.BIN.b2b_order_history_"
+		},
+		"SyncForecastDataFullTrigger_properties_FACEBOOK_SYNC_DATA_FULL_MODE_parameters_ExecutionMode": {
+			"type": "string",
+			"defaultValue": "Full"
+		},
+		"SyncForecastDataTrigger_properties_FACEBOOK_SYNC_DATA_parameters_ExecutionMode": {
+			"type": "string",
+			"defaultValue": "Delta"
+		},
+		"order_history_delete_properties_typeProperties_scope": {
+			"type": "string",
+			"defaultValue": "/subscriptions/3b96ccbc-e2f4-47c3-b59a-fe29e5359266/resourceGroups/rg-facebook-sftp/providers/Microsoft.Storage/storageAccounts/sftpstoragefacebook"
+		},
+		"containerUri": {
+			"type": "string",
+			"metadata": "URI to storage account containing linked ARM templates"
+		},
+		"containerSasToken": {
+			"type": "string",
+			"metadata": "Sas token to storage account containing linked ARM templates"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "ADF-FB-Algoplus-DEV_ArmTemplate_0",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_0.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"Aglo_Plus_FB_EDW_SqlServer_DEV_connectionString": {
+						"value": "[parameters('Aglo_Plus_FB_EDW_SqlServer_DEV_connectionString')]"
+					},
+					"AzureBlobStorage_connectionString": {
+						"value": "[parameters('AzureBlobStorage_connectionString')]"
+					},
+					"AzureDatabricksLinkService_New_accessToken": {
+						"value": "[parameters('AzureDatabricksLinkService_New_accessToken')]"
+					},
+					"AzureSQLparameterizedLink_connectionString": {
+						"value": "[parameters('AzureSQLparameterizedLink_connectionString')]"
+					},
+					"AzureSqlDatabase_dev_prod_replica_connectionString": {
+						"value": "[parameters('AzureSqlDatabase_dev_prod_replica_connectionString')]"
+					},
+					"LandingDataLake_accountKey": {
+						"value": "[parameters('LandingDataLake_accountKey')]"
+					},
+					"LandingDatalakeDev_accountKey": {
+						"value": "[parameters('LandingDatalakeDev_accountKey')]"
+					},
+					"sqlserver_dataplatform_general_dev_connectionString": {
+						"value": "[parameters('sqlserver_dataplatform_general_dev_connectionString')]"
+					},
+					"sqlserver_web_play_uat_database_connectionString": {
+						"value": "[parameters('sqlserver_web_play_uat_database_connectionString')]"
+					},
+					"AzureDatabricksLinkService_New_properties_typeProperties_existingClusterId": {
+						"value": "[parameters('AzureDatabricksLinkService_New_properties_typeProperties_existingClusterId')]"
+					},
+					"AzureKeyVaultForecastEngine_properties_typeProperties_baseUrl": {
+						"value": "[parameters('AzureKeyVaultForecastEngine_properties_typeProperties_baseUrl')]"
+					},
+					"LandingDataLake_properties_typeProperties_url": {
+						"value": "[parameters('LandingDataLake_properties_typeProperties_url')]"
+					},
+					"LandingDatalakeDev_properties_typeProperties_url": {
+						"value": "[parameters('LandingDatalakeDev_properties_typeProperties_url')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "ADF-FB-Algoplus-DEV_ArmTemplate_1",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_1.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'ADF-FB-Algoplus-DEV_ArmTemplate_0')]"
+			]
+		},
+		{
+			"name": "ADF-FB-Algoplus-DEV_ArmTemplate_2",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_2.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"AlgoFBDBQATableMigration_connectionString": {
+						"value": "[parameters('AlgoFBDBQATableMigration_connectionString')]"
+					},
+					"AlgoTableMigrationDest_connectionString": {
+						"value": "[parameters('AlgoTableMigrationDest_connectionString')]"
+					},
+					"AzureBlobStorage1_connectionString": {
+						"value": "[parameters('AzureBlobStorage1_connectionString')]"
+					},
+					"AzureSqlDatabase_connectionString": {
+						"value": "[parameters('AzureSqlDatabase_connectionString')]"
+					},
+					"AzureSqlDatabaseSecondDb_connectionString": {
+						"value": "[parameters('AzureSqlDatabaseSecondDb_connectionString')]"
+					},
+					"DS_BLOB_ARCHIVE_EXCEL_connectionString": {
+						"value": "[parameters('DS_BLOB_ARCHIVE_EXCEL_connectionString')]"
+					},
+					"Demo Database SqlServer_connectionString": {
+						"value": "[parameters('Demo Database SqlServer_connectionString')]"
+					},
+					"Meta Database SqlServer_connectionString": {
+						"value": "[parameters('Meta Database SqlServer_connectionString')]"
+					},
+					"SqlServer_Web_Facebook_AlgoApp_Production_connectionString": {
+						"value": "[parameters('SqlServer_Web_Facebook_AlgoApp_Production_connectionString')]"
+					},
+					"SqlSrv_FB_Database_AlgoApp_connectionString": {
+						"value": "[parameters('SqlSrv_FB_Database_AlgoApp_connectionString')]"
+					},
+					"Sql_Server_Facebook_Prod_connectionString": {
+						"value": "[parameters('Sql_Server_Facebook_Prod_connectionString')]"
+					},
+					"AzureSQLDynamicLinkService_properties_typeProperties_connectionString_secretName": {
+						"value": "[parameters('AzureSQLDynamicLinkService_properties_typeProperties_connectionString_secretName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'ADF-FB-Algoplus-DEV_ArmTemplate_1')]"
+			]
+		},
+		{
+			"name": "ADF-FB-Algoplus-DEV_ArmTemplate_3",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_3.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"sqldb_dataplatform_general_edw_dev_connectionString": {
+						"value": "[parameters('sqldb_dataplatform_general_edw_dev_connectionString')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'ADF-FB-Algoplus-DEV_ArmTemplate_2')]"
+			]
+		},
+		{
+			"name": "ADF-FB-Algoplus-DEV_ArmTemplate_4",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_4.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'ADF-FB-Algoplus-DEV_ArmTemplate_3')]"
+			]
+		},
+		{
+			"name": "ADF-FB-Algoplus-DEV_ArmTemplate_5",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_5.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"Copy meta files from dev to prod blob storage_properties_typeProperties_scope": {
+						"value": "[parameters('Copy meta files from dev to prod blob storage_properties_typeProperties_scope')]"
+					},
+					"Move Allocation file from input to archive_properties_typeProperties_scope": {
+						"value": "[parameters('Move Allocation file from input to archive_properties_typeProperties_scope')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'ADF-FB-Algoplus-DEV_ArmTemplate_4')]"
+			]
+		},
+		{
+			"name": "ADF-FB-Algoplus-DEV_ArmTemplate_6",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_6.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"Meta FC Narrative File Trigger_properties_typeProperties_scope": {
+						"value": "[parameters('Meta FC Narrative File Trigger_properties_typeProperties_scope')]"
+					},
+					"Meta Sell Out Feed File Trigger_properties_typeProperties_scope": {
+						"value": "[parameters('Meta Sell Out Feed File Trigger_properties_typeProperties_scope')]"
+					},
+					"Order_History_properties_Delete_OrderHistory_file_parameters_FileName": {
+						"value": "[parameters('Order_History_properties_Delete_OrderHistory_file_parameters_FileName')]"
+					},
+					"order_history_delete_properties_typeProperties_scope": {
+						"value": "[parameters('order_history_delete_properties_typeProperties_scope')]"
+					},
+					"SyncForecastDataFullTrigger_properties_FACEBOOK_SYNC_DATA_FULL_MODE_parameters_ExecutionMode": {
+						"value": "[parameters('SyncForecastDataFullTrigger_properties_FACEBOOK_SYNC_DATA_FULL_MODE_parameters_ExecutionMode')]"
+					},
+					"SyncForecastDataTrigger_properties_FACEBOOK_SYNC_DATA_parameters_ExecutionMode": {
+						"value": "[parameters('SyncForecastDataTrigger_properties_FACEBOOK_SYNC_DATA_parameters_ExecutionMode')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'ADF-FB-Algoplus-DEV_ArmTemplate_5')]"
+			]
+		}
+	]
+}

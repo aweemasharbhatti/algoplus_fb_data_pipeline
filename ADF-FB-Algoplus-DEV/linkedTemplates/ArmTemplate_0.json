@@ -1,0 +1,758 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "ADF-FB-Algoplus-DEV"
+		},
+		"Aglo_Plus_FB_EDW_SqlServer_DEV_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'Aglo_Plus_FB_EDW_SqlServer_DEV'"
+		},
+		"AzureBlobStorage_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'AzureBlobStorage'"
+		},
+		"AzureDatabricksLinkService_New_accessToken": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accessToken' of 'AzureDatabricksLinkService_New'"
+		},
+		"AzureSQLparameterizedLink_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'AzureSQLparameterizedLink'",
+			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=@{linkedService().server};Initial Catalog=@{linkedService().DB};User ID=@{linkedService().user};Password=@{linkedService().password}"
+		},
+		"AzureSqlDatabase_dev_prod_replica_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'AzureSqlDatabase_dev_prod_replica'"
+		},
+		"LandingDataLake_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'LandingDataLake'"
+		},
+		"LandingDatalakeDev_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'LandingDatalakeDev'"
+		},
+		"sqlserver_dataplatform_general_dev_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'sqlserver_dataplatform_general_dev'",
+			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=sqlserver-dataplatform-general-dev.database.windows.net;Initial Catalog=dwh-meta-qa"
+		},
+		"sqlserver_web_play_uat_database_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'sqlserver_web_play_uat_database'",
+			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=sqlserver-web-play-uat.database.windows.net;Initial Catalog=dwh-meta-uat"
+		},
+		"AzureDatabricksLinkService_New_properties_typeProperties_existingClusterId": {
+			"type": "string",
+			"defaultValue": "0217-111924-6d6694f6"
+		},
+		"AzureKeyVaultForecastEngine_properties_typeProperties_baseUrl": {
+			"type": "string",
+			"defaultValue": "https://eus-qa-play-oneview-kv.vault.azure.net/"
+		},
+		"LandingDataLake_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://datalakesynapfacebook.dfs.core.windows.net"
+		},
+		"LandingDatalakeDev_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://saplayforecastenginedev.dfs.core.windows.net"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/Aglo_Plus_FB_EDW_SqlServer_DEV')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "Facebook dev Sql Server Linked Service",
+				"annotations": [],
+				"type": "SqlServer",
+				"typeProperties": {
+					"connectionString": "[parameters('Aglo_Plus_FB_EDW_SqlServer_DEV_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureBlobStorage')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "Blob Storage Account For Fetching Files",
+				"annotations": [],
+				"type": "AzureBlobStorage",
+				"typeProperties": {
+					"connectionString": "[parameters('AzureBlobStorage_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDatabricksLinkService_New')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureDatabricks",
+				"typeProperties": {
+					"domain": "https://adb-7974263820238899.19.azuredatabricks.net/",
+					"accessToken": {
+						"type": "SecureString",
+						"value": "[parameters('AzureDatabricksLinkService_New_accessToken')]"
+					},
+					"existingClusterId": "[parameters('AzureDatabricksLinkService_New_properties_typeProperties_existingClusterId')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureKeyVaultForecastEngine')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureKeyVault",
+				"typeProperties": {
+					"baseUrl": "[parameters('AzureKeyVaultForecastEngine_properties_typeProperties_baseUrl')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureSQLparameterizedLink')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"parameters": {
+					"server": {
+						"type": "String"
+					},
+					"DB": {
+						"type": "String"
+					},
+					"user": {
+						"type": "String"
+					},
+					"password": {
+						"type": "String"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"connectionString": "[parameters('AzureSQLparameterizedLink_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureSqlDatabase_dev_prod_replica')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"connectionString": "[parameters('AzureSqlDatabase_dev_prod_replica_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LandingDataLake')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "Data Lake Gen-2 Landing Linked Service",
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('LandingDataLake_properties_typeProperties_url')]",
+					"accountKey": {
+						"type": "SecureString",
+						"value": "[parameters('LandingDataLake_accountKey')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LandingDatalakeDev')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('LandingDatalakeDev_properties_typeProperties_url')]",
+					"accountKey": {
+						"type": "SecureString",
+						"value": "[parameters('LandingDatalakeDev_accountKey')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/sqlserver_dataplatform_general_dev')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"connectionString": "[parameters('sqlserver_dataplatform_general_dev_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/sqlserver_web_play_uat_database')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"connectionString": "[parameters('sqlserver_web_play_uat_database_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/integration-runtime-facebook-dp-new')]",
+			"type": "Microsoft.DataFactory/factories/integrationRuntimes",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "SelfHosted",
+				"typeProperties": {}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/default')]",
+			"type": "Microsoft.DataFactory/factories/managedVirtualNetworks",
+			"apiVersion": "2018-06-01",
+			"properties": {},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/EMAIL_FAILURE_PIPELINE')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "FB_SYNC_PIPELINE_FAILURE_EMAIL",
+						"type": "WebActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"method": "POST",
+							"headers": {},
+							"url": "https://prod-02.eastus.logic.azure.com/workflows/bb1fef9903964e49b8f529488bce234a/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=e6zDsVCw4RXNc1M-hSanqvf9Mj6WUZ2q64KGRJU2dIk",
+							"body": {
+								"value": "@concat('{\"Subject\":\"Pipeline [',pipeline().parameters.PipelineName,'] has been failed\",\"Message\":\"The pipeline run is failed please visit ADF-FB-Algoplus-DEV\"}')\n",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Update Failure Status",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "FB_SYNC_PIPELINE_FAILURE_EMAIL",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[log].[SP_UpdateETLRunDetails_ADF]",
+							"storedProcedureParameters": {
+								"JobId": {
+									"value": {
+										"value": "@pipeline().parameters.JobId",
+										"type": "Expression"
+									},
+									"type": "Int32"
+								},
+								"JobStatus": {
+									"value": "Failure",
+									"type": "String"
+								},
+								"LogMsg": {
+									"value": "Execution Failed Check Logs",
+									"type": "String"
+								},
+								"RowCount": {
+									"value": "0",
+									"type": "Int64"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "Aglo_Plus_FB_EDW_SqlServer_DEV",
+							"type": "LinkedServiceReference"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"PipelineName": {
+						"type": "string",
+						"defaultValue": "Placeholder"
+					},
+					"JobId": {
+						"type": "string",
+						"defaultValue": "PlaceHolder"
+					}
+				},
+				"folder": {
+					"name": "Facebook Pipelines/Meta Algo Forecast Related"
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-11-07T11:25:51Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/Aglo_Plus_FB_EDW_SqlServer_DEV')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/FB_MASTER_PIPELINE_FAILURE_EMAIL')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "FB_MASTER_PIPELINE_FAILURE_EMAIL",
+						"type": "WebActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"method": "POST",
+							"headers": {},
+							"url": "https://prod-81.eastus.logic.azure.com:443/workflows/3a52b8da1cb74de792ee0f9e3ca89d06/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=rsPHuDvp742N7C3vA0ICmS-a5vT8EW_sr-lkDPwOwdA",
+							"connectVia": {
+								"referenceName": "integration-runtime-facebook-dp-new",
+								"type": "IntegrationRuntimeReference"
+							},
+							"body": {
+								"Subject": "Pipeline [FACEBOOK_MASTER_PIPELINE] has been failed",
+								"Message": "The pipeline run is failed please visit ADF-FB-Algoplus-DEV"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "Facebook Pipelines"
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-11-07T11:20:33Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/integrationRuntimes/integration-runtime-facebook-dp-new')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/FB_MASTER_PIPELINE_SUCCESS_EMAIL')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "FB_PIPELINE_SUCCESS_EMAIL",
+						"type": "WebActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"method": "POST",
+							"headers": {},
+							"url": "https://prod-26.eastus.logic.azure.com:443/workflows/bcbf2619295a4ff6b4038609c399ba24/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=ZG4d2NABWqRiXasCUZtpMUCOegSrE9TsUpbBbjWjXxk",
+							"connectVia": {
+								"referenceName": "integration-runtime-facebook-dp-new",
+								"type": "IntegrationRuntimeReference"
+							},
+							"body": {
+								"Subject": "Pipeline [FACEBOOK_MASTER_PIPELINE] run successfully",
+								"Message": "The pipeline run was successful and the facebook reports are refreshed now"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "Facebook Pipelines"
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-11-07T11:20:33Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/integrationRuntimes/integration-runtime-facebook-dp-new')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/FB_SYNC_PIPELINE_FAILURE_EMAIL')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "FB_SYNC_PIPELINE_FAILURE_EMAIL",
+						"type": "WebActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"method": "POST",
+							"headers": {},
+							"url": "https://prod-81.eastus.logic.azure.com:443/workflows/3a52b8da1cb74de792ee0f9e3ca89d06/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=rsPHuDvp742N7C3vA0ICmS-a5vT8EW_sr-lkDPwOwdA",
+							"connectVia": {
+								"referenceName": "integration-runtime-facebook-dp-new",
+								"type": "IntegrationRuntimeReference"
+							},
+							"body": {
+								"Subject": "Pipeline [FACEBOOK_SYNC_PIPELINE] has been failed",
+								"Message": "The pipeline run is failed please visit ADF-FB-Algoplus-DEV"
+							}
+						}
+					},
+					{
+						"name": "Update Failure Status",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "FB_SYNC_PIPELINE_FAILURE_EMAIL",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[log].[SP_UpdateETLRunDetails_ADF]",
+							"storedProcedureParameters": {
+								"JobId": {
+									"value": "21",
+									"type": "Int32"
+								},
+								"JobStatus": {
+									"value": "Failure",
+									"type": "String"
+								},
+								"LogMsg": {
+									"value": "Execution Failed Check Logs",
+									"type": "String"
+								},
+								"RowCount": {
+									"value": "0",
+									"type": "Int64"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "Aglo_Plus_FB_EDW_SqlServer_DEV",
+							"type": "LinkedServiceReference"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "Facebook Pipelines"
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-11-07T11:20:33Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/integrationRuntimes/integration-runtime-facebook-dp-new')]",
+				"[concat(variables('factoryId'), '/linkedServices/Aglo_Plus_FB_EDW_SqlServer_DEV')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/FB_SYNC_PIPELINE_SUCCESS_EMAIL')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "FB_PIPELINE_SUCCESS_EMAIL",
+						"type": "WebActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"method": "POST",
+							"headers": {},
+							"url": "https://prod-26.eastus.logic.azure.com:443/workflows/bcbf2619295a4ff6b4038609c399ba24/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=ZG4d2NABWqRiXasCUZtpMUCOegSrE9TsUpbBbjWjXxk",
+							"connectVia": {
+								"referenceName": "integration-runtime-facebook-dp-new",
+								"type": "IntegrationRuntimeReference"
+							},
+							"body": {
+								"Subject": "Pipeline [FACEBOOK_SYNC_DATA] run successfully",
+								"Message": "The pipeline run was successful and the facebook reports are refreshed now"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "Facebook Pipelines"
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-11-07T11:20:33Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/integrationRuntimes/integration-runtime-facebook-dp-new')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/META_EMAIL_SUCCESS_PIPELINE')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Success_EMAIL",
+						"type": "WebActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"method": "POST",
+							"headers": {},
+							"url": "https://prod-02.eastus.logic.azure.com/workflows/bb1fef9903964e49b8f529488bce234a/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=e6zDsVCw4RXNc1M-hSanqvf9Mj6WUZ2q64KGRJU2dIk",
+							"body": {
+								"value": "@concat('{\"Subject\":\"Pipeline [',pipeline().parameters.PipelineName,'] has been failed\",\"Message\":\"The pipeline run is completed with Success please visit ADF-FB-Algoplus-DEV for more details.\"}')\n",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Update Failure Status",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "Success_EMAIL",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[log].[SP_UpdateETLRunDetails_ADF]",
+							"storedProcedureParameters": {
+								"JobId": {
+									"value": {
+										"value": "@pipeline().parameters.JobId",
+										"type": "Expression"
+									},
+									"type": "Int32"
+								},
+								"JobStatus": {
+									"value": "SUCCEEDED",
+									"type": "String"
+								},
+								"LogMsg": {
+									"value": "Done Check Logs",
+									"type": "String"
+								},
+								"RowCount": {
+									"value": "0",
+									"type": "Int64"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "Aglo_Plus_FB_EDW_SqlServer_DEV",
+							"type": "LinkedServiceReference"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"PipelineName": {
+						"type": "string",
+						"defaultValue": "Placeholder"
+					},
+					"JobId": {
+						"type": "string",
+						"defaultValue": "PlaceHolder"
+					}
+				},
+				"folder": {
+					"name": "Facebook Pipelines/Meta Algo Forecast Related"
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-11-07T11:25:51Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/Aglo_Plus_FB_EDW_SqlServer_DEV')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Sp_Test')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Execute SP_LOAD_FACT_INVENTORY_PLANS",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[dbo].[SP_LOAD_FACT_INVENTORY_PLANS]"
+						},
+						"linkedServiceName": {
+							"referenceName": "Aglo_Plus_FB_EDW_SqlServer_DEV",
+							"type": "LinkedServiceReference"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "Test"
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-11-07T11:26:10Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/Aglo_Plus_FB_EDW_SqlServer_DEV')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Test_Pipeline_Stored_Procedure')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Execute SP_LOAD_FACT_INVENTORY_PLANS",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[dbo].[SP_LOAD_FACT_INVENTORY_PLANS]"
+						},
+						"linkedServiceName": {
+							"referenceName": "Aglo_Plus_FB_EDW_SqlServer_DEV",
+							"type": "LinkedServiceReference"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "Test"
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-11-07T11:26:10Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/Aglo_Plus_FB_EDW_SqlServer_DEV')]"
+			]
+		}
+	]
+}

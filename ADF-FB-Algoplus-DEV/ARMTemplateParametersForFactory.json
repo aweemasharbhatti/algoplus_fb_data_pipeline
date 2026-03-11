@@ -1,0 +1,111 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "ADF-FB-Algoplus-DEV"
+		},
+		"Aglo_Plus_FB_EDW_SqlServer_DEV_connectionString": {
+			"value": ""
+		},
+		"AlgoFBDBQATableMigration_connectionString": {
+			"value": ""
+		},
+		"AlgoTableMigrationDest_connectionString": {
+			"value": ""
+		},
+		"AzureBlobStorage_connectionString": {
+			"value": ""
+		},
+		"AzureBlobStorage1_connectionString": {
+			"value": ""
+		},
+		"AzureDatabricksLinkService_New_accessToken": {
+			"value": ""
+		},
+		"AzureSQLparameterizedLink_connectionString": {
+			"value": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=@{linkedService().server};Initial Catalog=@{linkedService().DB};User ID=@{linkedService().user};Password=@{linkedService().password}"
+		},
+		"AzureSqlDatabase_connectionString": {
+			"value": ""
+		},
+		"AzureSqlDatabaseSecondDb_connectionString": {
+			"value": ""
+		},
+		"AzureSqlDatabase_dev_prod_replica_connectionString": {
+			"value": ""
+		},
+		"DS_BLOB_ARCHIVE_EXCEL_connectionString": {
+			"value": ""
+		},
+		"Demo Database SqlServer_connectionString": {
+			"value": ""
+		},
+		"LandingDataLake_accountKey": {
+			"value": ""
+		},
+		"LandingDatalakeDev_accountKey": {
+			"value": ""
+		},
+		"Meta Database SqlServer_connectionString": {
+			"value": ""
+		},
+		"SqlServer_Web_Facebook_AlgoApp_Production_connectionString": {
+			"value": ""
+		},
+		"SqlSrv_FB_Database_AlgoApp_connectionString": {
+			"value": ""
+		},
+		"Sql_Server_Facebook_Prod_connectionString": {
+			"value": ""
+		},
+		"sqldb_dataplatform_general_edw_dev_connectionString": {
+			"value": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=sqlserver-dataplatform-general-dev.database.windows.net;Initial Catalog=dwh-meta-qa"
+		},
+		"sqlserver_dataplatform_general_dev_connectionString": {
+			"value": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=sqlserver-dataplatform-general-dev.database.windows.net;Initial Catalog=dwh-meta-qa"
+		},
+		"sqlserver_web_play_uat_database_connectionString": {
+			"value": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=sqlserver-web-play-uat.database.windows.net;Initial Catalog=dwh-meta-uat"
+		},
+		"AzureDatabricksLinkService_New_properties_typeProperties_existingClusterId": {
+			"value": "0217-111924-6d6694f6"
+		},
+		"AzureKeyVaultForecastEngine_properties_typeProperties_baseUrl": {
+			"value": "https://eus-qa-play-oneview-kv.vault.azure.net/"
+		},
+		"AzureSQLDynamicLinkService_properties_typeProperties_connectionString_secretName": {
+			"value": "@linkedService().secretname"
+		},
+		"LandingDataLake_properties_typeProperties_url": {
+			"value": "https://datalakesynapfacebook.dfs.core.windows.net"
+		},
+		"LandingDatalakeDev_properties_typeProperties_url": {
+			"value": "https://saplayforecastenginedev.dfs.core.windows.net"
+		},
+		"Copy meta files from dev to prod blob storage_properties_typeProperties_scope": {
+			"value": "/subscriptions/3b96ccbc-e2f4-47c3-b59a-fe29e5359266/resourceGroups/rg-facebook-sftp/providers/Microsoft.Storage/storageAccounts/sftpstoragefacebook"
+		},
+		"Meta FC Narrative File Trigger_properties_typeProperties_scope": {
+			"value": "/subscriptions/3b96ccbc-e2f4-47c3-b59a-fe29e5359266/resourceGroups/rg-facebook-sftp/providers/Microsoft.Storage/storageAccounts/sftpstoragefacebook"
+		},
+		"Meta Sell Out Feed File Trigger_properties_typeProperties_scope": {
+			"value": "/subscriptions/3b96ccbc-e2f4-47c3-b59a-fe29e5359266/resourceGroups/rg-facebook-sftp/providers/Microsoft.Storage/storageAccounts/sftpstoragefacebook"
+		},
+		"Move Allocation file from input to archive_properties_typeProperties_scope": {
+			"value": "/subscriptions/3b96ccbc-e2f4-47c3-b59a-fe29e5359266/resourceGroups/rg-facebook-sftp/providers/Microsoft.Storage/storageAccounts/sftpstoragefacebook"
+		},
+		"Order_History_properties_Delete_OrderHistory_file_parameters_FileName": {
+			"value": "facebook_e2open.BIN.b2b_order_history_"
+		},
+		"SyncForecastDataFullTrigger_properties_FACEBOOK_SYNC_DATA_FULL_MODE_parameters_ExecutionMode": {
+			"value": "Full"
+		},
+		"SyncForecastDataTrigger_properties_FACEBOOK_SYNC_DATA_parameters_ExecutionMode": {
+			"value": "Delta"
+		},
+		"order_history_delete_properties_typeProperties_scope": {
+			"value": "/subscriptions/3b96ccbc-e2f4-47c3-b59a-fe29e5359266/resourceGroups/rg-facebook-sftp/providers/Microsoft.Storage/storageAccounts/sftpstoragefacebook"
+		}
+	}
+}

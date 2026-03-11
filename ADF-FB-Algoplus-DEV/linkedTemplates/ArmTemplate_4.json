@@ -1,0 +1,5845 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "ADF-FB-Algoplus-DEV"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/TestSeasonalityIndexPipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy From SQL",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".txt"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "AzureSqlDBDEV",
+								"type": "DatasetReference",
+								"parameters": {
+									"schema": {
+										"value": "@pipeline().parameters.source_schema",
+										"type": "Expression"
+									},
+									"table": {
+										"value": "@pipeline().parameters.source_table",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "CSVSinkDatasetDev",
+								"type": "DatasetReference",
+								"parameters": {
+									"folder": {
+										"value": "@pipeline().parameters.output_folder",
+										"type": "Expression"
+									},
+									"file": {
+										"value": "@pipeline().parameters.output_file",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					},
+					{
+						"name": "Copy To SQL Dim1",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Notebook_Dim_1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"wildcardFolderPath": {
+										"value": "@concat(pipeline().parameters.target_folder,'/',pipeline().parameters.target_file,'_',replace(variables('Dimension1'),',','_'))",
+										"type": "Expression"
+									},
+									"wildcardFileName": "*.csv",
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "AzureSqlSink",
+								"tableOption": "autoCreate",
+								"disableMetricsCollection": false
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "CSVSinkDatasetDev",
+								"type": "DatasetReference",
+								"parameters": {
+									"folder": {
+										"value": "@pipeline().parameters.target_folder",
+										"type": "Expression"
+									},
+									"file": {
+										"value": "@pipeline().parameters.target_file",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "AzureSqlDBDEV",
+								"type": "DatasetReference",
+								"parameters": {
+									"schema": {
+										"value": "@pipeline().parameters.target_schema",
+										"type": "Expression"
+									},
+									"table": {
+										"value": "@pipeline().parameters.target_table",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					},
+					{
+						"name": "Notebook_Dim_1",
+						"type": "DatabricksNotebook",
+						"dependsOn": [
+							{
+								"activity": "Copy From SQL",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Users/muddaser.talal@algo.com/seasonalityIndex/SeasonalityIndexComputation",
+							"baseParameters": {
+								"input_file_name": {
+									"value": "@pipeline().parameters.output_file",
+									"type": "Expression"
+								},
+								"source_file_path": {
+									"value": "@pipeline().parameters.output_folder",
+									"type": "Expression"
+								},
+								"target_file": {
+									"value": "@pipeline().parameters.target_file",
+									"type": "Expression"
+								},
+								"target_folder": {
+									"value": "@pipeline().parameters.target_folder",
+									"type": "Expression"
+								},
+								"Dimensions": {
+									"value": "@variables('Dimension1')",
+									"type": "Expression"
+								},
+								"end_date": {
+									"value": "@pipeline().parameters.end_date",
+									"type": "Expression"
+								},
+								"BatchID": {
+									"value": "@pipeline().parameters.batchid",
+									"type": "Expression"
+								},
+								"week_window": {
+									"value": "@pipeline().parameters.week_window",
+									"type": "Expression"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "AzureDatabrickslinkserviceUpdated",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"clusterType": {
+									"value": "@pipeline().parameters.cluster_type",
+									"type": "Expression"
+								},
+								"workerNode": {
+									"value": "@pipeline().parameters.worker_node",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "Notebook_Dim_2",
+						"type": "DatabricksNotebook",
+						"dependsOn": [
+							{
+								"activity": "Copy From SQL",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Users/muddaser.talal@algo.com/seasonalityIndex/SeasonalityIndexComputation",
+							"baseParameters": {
+								"input_file_name": {
+									"value": "@pipeline().parameters.output_file",
+									"type": "Expression"
+								},
+								"source_file_path": {
+									"value": "@pipeline().parameters.output_folder",
+									"type": "Expression"
+								},
+								"target_file": {
+									"value": "@pipeline().parameters.target_file",
+									"type": "Expression"
+								},
+								"target_folder": {
+									"value": "@pipeline().parameters.target_folder",
+									"type": "Expression"
+								},
+								"Dimensions": {
+									"value": "@variables('Dimension2')",
+									"type": "Expression"
+								},
+								"end_date": {
+									"value": "@pipeline().parameters.end_date",
+									"type": "Expression"
+								},
+								"BatchID": {
+									"value": "@pipeline().parameters.batchid",
+									"type": "Expression"
+								},
+								"week_window": {
+									"value": "@pipeline().parameters.week_window",
+									"type": "Expression"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "AzureDatabrickslinkserviceUpdated",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"clusterType": {
+									"value": "@pipeline().parameters.cluster_type",
+									"type": "Expression"
+								},
+								"workerNode": {
+									"value": "@pipeline().parameters.worker_node",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "Copy To SQL Dim2",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Notebook_Dim_2",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"wildcardFolderPath": {
+										"value": "@concat(pipeline().parameters.target_folder,'/',pipeline().parameters.target_file,'_',replace(variables('Dimension2'),',','_'))",
+										"type": "Expression"
+									},
+									"wildcardFileName": "*.csv",
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "AzureSqlSink",
+								"tableOption": "autoCreate",
+								"disableMetricsCollection": false
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "CSVSinkDatasetDev",
+								"type": "DatasetReference",
+								"parameters": {
+									"folder": {
+										"value": "@pipeline().parameters.target_folder",
+										"type": "Expression"
+									},
+									"file": {
+										"value": "@pipeline().parameters.target_file",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "AzureSqlDBDEV",
+								"type": "DatasetReference",
+								"parameters": {
+									"schema": {
+										"value": "@pipeline().parameters.target_schema",
+										"type": "Expression"
+									},
+									"table": {
+										"value": "@pipeline().parameters.target_table",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					},
+					{
+						"name": "Notebook_Dim_3",
+						"type": "DatabricksNotebook",
+						"dependsOn": [
+							{
+								"activity": "Copy From SQL",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Users/muddaser.talal@algo.com/seasonalityIndex/SeasonalityIndexComputation",
+							"baseParameters": {
+								"input_file_name": {
+									"value": "@pipeline().parameters.output_file",
+									"type": "Expression"
+								},
+								"source_file_path": {
+									"value": "@pipeline().parameters.output_folder",
+									"type": "Expression"
+								},
+								"target_file": {
+									"value": "@pipeline().parameters.target_file",
+									"type": "Expression"
+								},
+								"target_folder": {
+									"value": "@pipeline().parameters.target_folder",
+									"type": "Expression"
+								},
+								"Dimensions": {
+									"value": "@variables('Dimension3')",
+									"type": "Expression"
+								},
+								"end_date": {
+									"value": "@pipeline().parameters.end_date",
+									"type": "Expression"
+								},
+								"BatchID": {
+									"value": "@pipeline().parameters.batchid",
+									"type": "Expression"
+								},
+								"week_window": {
+									"value": "@pipeline().parameters.week_window",
+									"type": "Expression"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "AzureDatabrickslinkserviceUpdated",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"clusterType": {
+									"value": "@pipeline().parameters.cluster_type",
+									"type": "Expression"
+								},
+								"workerNode": {
+									"value": "@pipeline().parameters.worker_node",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "Copy To SQL Dim3",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Notebook_Dim_3",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"wildcardFolderPath": {
+										"value": "@concat(pipeline().parameters.target_folder,'/',pipeline().parameters.target_file,'_',replace(variables('Dimension3'),',','_'))",
+										"type": "Expression"
+									},
+									"wildcardFileName": "*.csv",
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "AzureSqlSink",
+								"tableOption": "autoCreate",
+								"disableMetricsCollection": false
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "CSVSinkDatasetDev",
+								"type": "DatasetReference",
+								"parameters": {
+									"folder": {
+										"value": "@pipeline().parameters.target_folder",
+										"type": "Expression"
+									},
+									"file": {
+										"value": "@pipeline().parameters.target_file",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "AzureSqlDBDEV",
+								"type": "DatasetReference",
+								"parameters": {
+									"schema": {
+										"value": "@pipeline().parameters.target_schema",
+										"type": "Expression"
+									},
+									"table": {
+										"value": "@pipeline().parameters.target_table",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"source_table": {
+						"type": "string",
+						"defaultValue": "V_fact_sale"
+					},
+					"source_schema": {
+						"type": "string",
+						"defaultValue": "dbo"
+					},
+					"output_folder": {
+						"type": "string",
+						"defaultValue": "SourceDataFix"
+					},
+					"output_file": {
+						"type": "string",
+						"defaultValue": "factsale.csv"
+					},
+					"target_folder": {
+						"type": "string",
+						"defaultValue": "SeasonalityIndex/output"
+					},
+					"target_file": {
+						"type": "string",
+						"defaultValue": "SeasonalityIndex.csv"
+					},
+					"target_table": {
+						"type": "string",
+						"defaultValue": "SeasonalityIndextemp"
+					},
+					"target_schema": {
+						"type": "string",
+						"defaultValue": "dbo"
+					},
+					"cluster_type": {
+						"type": "string",
+						"defaultValue": "Standard_DS3_v2"
+					},
+					"worker_node": {
+						"type": "string",
+						"defaultValue": "2"
+					},
+					"end_date": {
+						"type": "string",
+						"defaultValue": "2021-02-03"
+					},
+					"batchid": {
+						"type": "string",
+						"defaultValue": "2"
+					},
+					"week_window": {
+						"type": "string",
+						"defaultValue": "52"
+					}
+				},
+				"variables": {
+					"Dimension1": {
+						"type": "String",
+						"defaultValue": "item_account_key"
+					},
+					"Dimension2": {
+						"type": "String",
+						"defaultValue": "item_key,country_code"
+					},
+					"Dimension3": {
+						"type": "String",
+						"defaultValue": "item_key"
+					}
+				},
+				"folder": {
+					"name": "MuddaserTalal"
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-02-14T08:37:06Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/de-promo-pipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy To SQL",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Notebook_De_Promo",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"wildcardFolderPath": {
+										"value": "@concat(pipeline().parameters.target_folder,'/',pipeline().parameters.target_file)",
+										"type": "Expression"
+									},
+									"wildcardFileName": "*.csv",
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "AzureSqlSink",
+								"preCopyScript": {
+									"value": "@{concat('delete from ',pipeline().parameters.target_schema,'.',pipeline().parameters.target_table)}",
+									"type": "Expression"
+								},
+								"writeBehavior": "insert",
+								"sqlWriterUseTableLock": false,
+								"disableMetricsCollection": false
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "CSVSinkDatasetDev",
+								"type": "DatasetReference",
+								"parameters": {
+									"folder": {
+										"value": "@pipeline().parameters.target_folder",
+										"type": "Expression"
+									},
+									"file": {
+										"value": "@pipeline().parameters.target_file",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "AzureSqlDBDEV",
+								"type": "DatasetReference",
+								"parameters": {
+									"schema": {
+										"value": "@pipeline().parameters.target_schema",
+										"type": "Expression"
+									},
+									"table": {
+										"value": "@pipeline().parameters.target_table",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					},
+					{
+						"name": "Copy Calendar From SQL",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"sqlReaderQuery": "select retailerkey as endcustomersfid,sku as item_no,cast(startdate as date) as promo_start_date ,cast(enddate as date) as promo_end_date,weeksbeforepromo,weeksafterpromo,cast(status as int) as promo_status from engine.[v_promotionplanner_depromo]\n",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".txt"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "AzureSqlDBDEV",
+								"type": "DatasetReference",
+								"parameters": {
+									"schema": {
+										"value": "@pipeline().parameters.calender_schema",
+										"type": "Expression"
+									},
+									"table": {
+										"value": "@pipeline().parameters.calender_table",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "CSVSinkDatasetDev",
+								"type": "DatasetReference",
+								"parameters": {
+									"folder": {
+										"value": "@pipeline().parameters.source_folder",
+										"type": "Expression"
+									},
+									"file": {
+										"value": "@pipeline().parameters.calender_file",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					},
+					{
+						"name": "Copy sales From SQL",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Copy Calendar From SQL",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".txt"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "AzureSqlDBDEV",
+								"type": "DatasetReference",
+								"parameters": {
+									"schema": {
+										"value": "@pipeline().parameters.source_schema",
+										"type": "Expression"
+									},
+									"table": {
+										"value": "@pipeline().parameters.source_table",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "CSVSinkDatasetDev",
+								"type": "DatasetReference",
+								"parameters": {
+									"folder": {
+										"value": "@pipeline().parameters.source_folder",
+										"type": "Expression"
+									},
+									"file": {
+										"value": "@pipeline().parameters.source_file",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					},
+					{
+						"name": "Notebook_De_Promo",
+						"type": "DatabricksNotebook",
+						"dependsOn": [
+							{
+								"activity": "Copy sales From SQL",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Users/muddaser.talal@algo.com/de-promo-engine/de-promo",
+							"baseParameters": {
+								"input_file_name": {
+									"value": "@pipeline().parameters.source_file",
+									"type": "Expression"
+								},
+								"source_file_path": {
+									"value": "@pipeline().parameters.source_folder",
+									"type": "Expression"
+								},
+								"target_file": {
+									"value": "@pipeline().parameters.target_file",
+									"type": "Expression"
+								},
+								"target_folder": {
+									"value": "@pipeline().parameters.target_folder",
+									"type": "Expression"
+								},
+								"promo_calendar_folder": {
+									"value": "@pipeline().parameters.source_folder",
+									"type": "Expression"
+								},
+								"promo_calendar_file": {
+									"value": "@pipeline().parameters.calender_file",
+									"type": "Expression"
+								},
+								"promo_weeks_after": {
+									"value": "@pipeline().parameters.promo_weeks_after",
+									"type": "Expression"
+								},
+								"promo_weeks_before": {
+									"value": "@pipeline().parameters.promo_weeks_before",
+									"type": "Expression"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "AzureDatabrickslinkserviceUpdated",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"clusterType": {
+									"value": "@pipeline().parameters.cluster_type",
+									"type": "Expression"
+								},
+								"workerNode": {
+									"value": "@pipeline().parameters.worker_node",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "Delete Datalake files",
+						"type": "Delete",
+						"dependsOn": [
+							{
+								"activity": "Copy To SQL",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "DeleteCSVSinkDatasetDev",
+								"type": "DatasetReference",
+								"parameters": {
+									"folder": {
+										"value": "@pipeline().parameters.source_folder",
+										"type": "Expression"
+									}
+								}
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobFSReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"source_folder": {
+						"type": "string",
+						"defaultValue": "depromo"
+					},
+					"source_file": {
+						"type": "string",
+						"defaultValue": "Factsale.csv"
+					},
+					"target_folder": {
+						"type": "string",
+						"defaultValue": "depromo/output"
+					},
+					"target_file": {
+						"type": "string",
+						"defaultValue": "FactsaleOut.csv"
+					},
+					"target_table": {
+						"type": "string",
+						"defaultValue": "v_fact_sale_depromo"
+					},
+					"target_schema": {
+						"type": "string",
+						"defaultValue": "engine"
+					},
+					"cluster_type": {
+						"type": "string",
+						"defaultValue": "Standard_DS3_v2"
+					},
+					"worker_node": {
+						"type": "string",
+						"defaultValue": "2"
+					},
+					"source_table": {
+						"type": "string",
+						"defaultValue": "v_fact_sale"
+					},
+					"source_schema": {
+						"type": "string",
+						"defaultValue": "dbo"
+					},
+					"promo_weeks_before": {
+						"type": "string",
+						"defaultValue": "7"
+					},
+					"calender_schema": {
+						"type": "string",
+						"defaultValue": "engine"
+					},
+					"calender_table": {
+						"type": "string",
+						"defaultValue": "promo_calender"
+					},
+					"calender_file": {
+						"type": "string",
+						"defaultValue": "promo_calendar.csv"
+					},
+					"promo_weeks_after": {
+						"type": "string",
+						"defaultValue": "7"
+					}
+				},
+				"folder": {
+					"name": "MuddaserTalal"
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-06-03T15:25:01Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureSqlDB')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"schema": {
+						"type": "string"
+					},
+					"table": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": {
+						"value": "@dataset().schema",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@dataset().table",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureSqlSecondDB')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabaseSecondDb",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "seasonality_type",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "toolbox_forecast_type",
+						"type": "varchar"
+					},
+					{
+						"name": "customer_code",
+						"type": "varchar"
+					},
+					{
+						"name": "item_code",
+						"type": "varchar"
+					},
+					{
+						"name": "week_date",
+						"type": "date"
+					},
+					{
+						"name": "week_number",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "quantity",
+						"type": "varchar"
+					},
+					{
+						"name": "seasonal_factor",
+						"type": "varchar"
+					},
+					{
+						"name": "promotional_factor",
+						"type": "varchar"
+					},
+					{
+						"name": "run_date",
+						"type": "date"
+					},
+					{
+						"name": "wma_use_percent",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "seasonality_curve_percent",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "tema_use_percent",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "dema_use_percent",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "forecast_type",
+						"type": "varchar"
+					},
+					{
+						"name": "placement",
+						"type": "varchar"
+					},
+					{
+						"name": "mfoq_look_forward_window",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "mfoq_use_percent",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "on_order_quantity",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "amazon_pos_forecast",
+						"type": "varchar"
+					},
+					{
+						"name": "vendor_central_pos_forecast",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "forecast_input",
+						"type": "varchar"
+					},
+					{
+						"name": "future_promotional_factors",
+						"type": "varchar"
+					},
+					{
+						"name": "future_promo_factor_dates",
+						"type": "varchar"
+					},
+					{
+						"name": "in_transit_quantity",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "lookback_window",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "ema_use_percent",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "shipment_blend_percentage",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "promotionality_curve_percent",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "item_type",
+						"type": "varchar"
+					},
+					{
+						"name": "future_seasonal_factors",
+						"type": "varchar"
+					},
+					{
+						"name": "category",
+						"type": "varchar"
+					},
+					{
+						"name": "sma_use_percent",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "pos_blend_percentage",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "wma_weights",
+						"type": "varchar"
+					},
+					{
+						"name": "release_type",
+						"type": "varchar"
+					},
+					{
+						"name": "de_promo_quantity",
+						"type": "varchar"
+					},
+					{
+						"name": "de_promo_and_de_season_quantity",
+						"type": "varchar"
+					},
+					{
+						"name": "sma_forecast",
+						"type": "varchar"
+					},
+					{
+						"name": "wma_forecast",
+						"type": "varchar"
+					},
+					{
+						"name": "ema_forecast",
+						"type": "varchar"
+					},
+					{
+						"name": "dema_forecast",
+						"type": "varchar"
+					},
+					{
+						"name": "tema_forecast",
+						"type": "varchar"
+					},
+					{
+						"name": "mfoq_forecast",
+						"type": "varchar"
+					},
+					{
+						"name": "combined_and_scaled_forecast",
+						"type": "varchar"
+					},
+					{
+						"name": "merged_forecast",
+						"type": "varchar"
+					},
+					{
+						"name": "reseasonalized_forecast",
+						"type": "varchar"
+					},
+					{
+						"name": "reseason_and_repromo_forecast",
+						"type": "varchar"
+					},
+					{
+						"name": "algo_batch_id",
+						"type": "varchar"
+					},
+					{
+						"name": "algo_created_date",
+						"type": "date"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "fcst_pos_forecast_data"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureSqlTableMigration')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AlgoFBDBQATableMigration",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"schema": {
+						"type": "string"
+					},
+					"table": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": {
+						"value": "@dataset().schema",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@dataset().table",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureSqlTableMigrationDest')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AlgoTableMigrationDest",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"schema": {
+						"type": "string"
+					},
+					"table": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": {
+						"value": "@dataset().schema",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@concat(dataset().table,'_test')",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_BLOB_ARCHIVE_CSV11')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureBlobStorage1",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"FileName": {
+						"type": "string"
+					},
+					"FolderPath": {
+						"type": "string"
+					},
+					"deli_Comma": {
+						"type": "string",
+						"defaultValue": ","
+					},
+					"deli_Tab": {
+						"type": "string",
+						"defaultValue": "\t"
+					}
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": {
+							"value": "@dataset().FileName",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().FolderPath",
+							"type": "Expression"
+						},
+						"container": "fb-algoplus-dev"
+					},
+					"columnDelimiter": "\t",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_Demo_SqlServerTable')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "Demo Database SqlServer",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ServerName": {
+							"value": "algoplusbbydesql.database.windows.net",
+							"type": "Expression"
+						},
+						"DatabaseName": {
+							"value": "@dataset().DemoDatabaseName",
+							"type": "Expression"
+						}
+					}
+				},
+				"parameters": {
+					"SchemaName": {
+						"type": "string",
+						"defaultValue": "dbo"
+					},
+					"TableName": {
+						"type": "string",
+						"defaultValue": "Screen"
+					},
+					"DemoDatabaseName": {
+						"type": "string",
+						"defaultValue": "AlgoPlusDevMerged"
+					}
+				},
+				"annotations": [],
+				"type": "SqlServerTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": {
+						"value": "@dataset().SchemaName",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@dataset().TableName",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_Dynamic_Facebook_SqlServerTable')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "Meta Database SqlServer",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ServerName": {
+							"value": "srv-db-algoplus-db.database.windows.net",
+							"type": "Expression"
+						},
+						"Database": {
+							"value": "@dataset().FBDatabaseName",
+							"type": "Expression"
+						}
+					}
+				},
+				"parameters": {
+					"SchemaName": {
+						"type": "string",
+						"defaultValue": "dbo"
+					},
+					"TableName": {
+						"type": "string",
+						"defaultValue": "Screen"
+					},
+					"FBDatabaseName": {
+						"type": "string",
+						"defaultValue": "algodbfbqa"
+					}
+				},
+				"annotations": [],
+				"type": "SqlServerTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": {
+						"value": "@dataset().SchemaName",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@dataset().TableName",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_FB_PROD_ALGO_APP_DB')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "SqlServer_Web_Facebook_AlgoApp_Production",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"DB_Name": "sqldb-facebook-prod"
+					}
+				},
+				"parameters": {
+					"TableName": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "SqlServerTable",
+				"schema": [
+					{
+						"name": "BRAND",
+						"type": "nvarchar"
+					},
+					{
+						"name": "WEEK_START_DATE",
+						"type": "date"
+					},
+					{
+						"name": "WEEK_END_DATE",
+						"type": "date"
+					},
+					{
+						"name": "WEEK_NUMBER",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "SELL_THROUGH",
+						"type": "decimal",
+						"precision": 16,
+						"scale": 2
+					},
+					{
+						"name": "RETAILER_COUNTRY",
+						"type": "nvarchar"
+					},
+					{
+						"name": "RETAILER_REGION",
+						"type": "nvarchar"
+					},
+					{
+						"name": "OCULUS_TRAFFIC",
+						"type": "bigint",
+						"precision": 19
+					},
+					{
+						"name": "OCULUS_CONVERSION_RATE",
+						"type": "decimal",
+						"precision": 16,
+						"scale": 8
+					},
+					{
+						"name": "PORTAL_TRAFFIC",
+						"type": "decimal",
+						"precision": 16,
+						"scale": 4
+					},
+					{
+						"name": "PORTAL_CONVERSION_RATE",
+						"type": "decimal",
+						"precision": 16,
+						"scale": 8
+					},
+					{
+						"name": "RETAILER_ID",
+						"type": "nvarchar"
+					},
+					{
+						"name": "RETAILER_KEY",
+						"type": "nvarchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": {
+						"value": "@dataset().TableName",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_FB_QA_ALGO_APP_DB')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "SqlSrv_FB_Database_AlgoApp",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"TableName": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "SqlServerTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": {
+						"value": "@dataset().TableName",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_FB_QA_ALGO_APP_DB_SP')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "SqlServer_Web_Facebook_AlgoApp_Production",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "SqlServerTable",
+				"schema": [],
+				"typeProperties": {}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_sqldb_dataplatform_general_edw_dev')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "sqldb_dataplatform_general_edw_dev",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"schema": {
+						"type": "string",
+						"defaultValue": "@dataset().schema"
+					},
+					"table": {
+						"type": "string",
+						"defaultValue": "@dataset().table"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "ITEM_KEY",
+						"type": "nvarchar"
+					},
+					{
+						"name": "SKU",
+						"type": "nvarchar"
+					},
+					{
+						"name": "PRODUCT_DESCRIPTION",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Brand",
+						"type": "nvarchar"
+					},
+					{
+						"name": "PRODUCT_GROUP",
+						"type": "nvarchar"
+					},
+					{
+						"name": "product_family",
+						"type": "nvarchar"
+					},
+					{
+						"name": "parent_product",
+						"type": "nvarchar"
+					},
+					{
+						"name": "PRODUCT_STATUS",
+						"type": "nvarchar"
+					},
+					{
+						"name": "PRODUCT_CATEGORY",
+						"type": "nvarchar"
+					},
+					{
+						"name": "MSRP",
+						"type": "decimal",
+						"precision": 18,
+						"scale": 4
+					},
+					{
+						"name": "COST",
+						"type": "decimal",
+						"precision": 18,
+						"scale": 4
+					},
+					{
+						"name": "COLOR",
+						"type": "nvarchar"
+					},
+					{
+						"name": "CAPACITY",
+						"type": "bigint",
+						"precision": 19
+					},
+					{
+						"name": "SCREEN_SIZE",
+						"type": "nvarchar"
+					},
+					{
+						"name": "STREET_DATE",
+						"type": "datetime2",
+						"scale": 0
+					},
+					{
+						"name": "ACCY_TYPE",
+						"type": "nvarchar"
+					},
+					{
+						"name": "LAST_SOLD_WEEK_END_DATE",
+						"type": "date"
+					},
+					{
+						"name": "LAST_SOLD_WEEK_NO",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "SKU_IN_HISTORIC_SALES",
+						"type": "nvarchar"
+					},
+					{
+						"name": "MSRP_CURRENCY",
+						"type": "varchar"
+					},
+					{
+						"name": "Active",
+						"type": "bit"
+					}
+				],
+				"typeProperties": {
+					"schema": {
+						"value": "@dataset().schema",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@dataset().table",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Master_Forecast_Run')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "Master Pipeline for Forecast",
+				"activities": [
+					{
+						"name": "GetForecastConfigs",
+						"description": "read configs from DB table",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "AzureSQLDynamic",
+								"type": "DatasetReference",
+								"parameters": {
+									"server": "sqlserver-dataplatform-general-dev.database.windows.net",
+									"schema": "engine",
+									"table": "ForecastPipelineConfig",
+									"DB": "dwh-meta-dev",
+									"User": "sqladmin",
+									"Password": "sCSmjvUoFIhEh2S"
+								}
+							},
+							"firstRowOnly": false
+						}
+					},
+					{
+						"name": "Set ForecastConfigs",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "GetForecastConfigs",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "ConfigValues",
+							"value": {
+								"value": "@activity('GetForecastConfigs').output.value",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "check forecast run is enable",
+						"type": "IfCondition",
+						"dependsOn": [
+							{
+								"activity": "Set ForecastConfigs",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@activity('GetForecastConfigs').output.value[0].IsForecastRun",
+								"type": "Expression"
+							},
+							"ifTrueActivities": [
+								{
+									"name": "Copy data",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "AzureSqlSource",
+											"sqlReaderStoredProcedureName": "[[engine].[ForecastpipelineData]",
+											"storedProcedureParameters": {
+												"PforecastKey": {
+													"type": "String",
+													"value": {
+														"value": "@activity('GetForecastConfigs').output.value[0].Forecast_Key",
+														"type": "Expression"
+													}
+												}
+											},
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"sink": {
+											"type": "DelimitedTextSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "DelimitedTextWriteSettings",
+												"quoteAllText": true,
+												"fileExtension": ".txt"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "AzureSQLDynamic",
+											"type": "DatasetReference",
+											"parameters": {
+												"server": {
+													"value": "@activity('GetForecastConfigs').output.value[0].ServerName",
+													"type": "Expression"
+												},
+												"schema": {
+													"value": "@activity('GetForecastConfigs').output.value[0].TargetSchema",
+													"type": "Expression"
+												},
+												"table": "temp",
+												"DB": {
+													"value": "@activity('GetForecastConfigs').output.value[0].DB",
+													"type": "Expression"
+												},
+												"User": {
+													"value": "@activity('GetForecastConfigs').output.value[0].UserName",
+													"type": "Expression"
+												},
+												"Password": {
+													"value": "@activity('GetForecastConfigs').output.value[0].Password",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "CSVSinkDatasetV2",
+											"type": "DatasetReference",
+											"parameters": {
+												"folder": {
+													"value": "@concat(activity('GetForecastConfigs').output.value[0].Output_Path,'/',activity('GetForecastConfigs').output.value[0].Forecast_Key)",
+													"type": "Expression"
+												},
+												"file": {
+													"value": "@activity('GetForecastConfigs').output.value[0].File_Name",
+													"type": "Expression"
+												},
+												"conatiner": {
+													"value": "@activity('GetForecastConfigs').output.value[0].ClientName",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"variables": {
+					"ConfigValues": {
+						"type": "Array"
+					},
+					"ForecastMethod": {
+						"type": "String",
+						"defaultValue": "SMA"
+					},
+					"FromWeek": {
+						"type": "String"
+					},
+					"ToWeek": {
+						"type": "String"
+					},
+					"FixLookbackWeeks": {
+						"type": "Boolean"
+					},
+					"TimePeriod": {
+						"type": "String"
+					}
+				},
+				"folder": {
+					"name": "poc fcst zaheer"
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DUMP_FACEBOOK_DATA_INTO_DEMO_DB')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Get Tables List",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "SqlServerSource",
+								"sqlReaderQuery": "select 'dbo' SchemaName, replace(tablename,'dbo.','') TableName from dbo.tablename",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "DS_Dynamic_Facebook_SqlServerTable",
+								"type": "DatasetReference",
+								"parameters": {
+									"SchemaName": "dbo",
+									"TableName": "Screen",
+									"FBDatabaseName": {
+										"value": "@pipeline().parameters.FBDataBase",
+										"type": "Expression"
+									}
+								}
+							},
+							"firstRowOnly": false
+						}
+					},
+					{
+						"name": "ForEach Table",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Get Tables List",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Get Tables List').output.value",
+								"type": "Expression"
+							},
+							"batchCount": 30,
+							"activities": [
+								{
+									"name": "Copy data to Demo DB",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "SqlServerSource",
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"sink": {
+											"type": "SqlServerSink",
+											"preCopyScript": {
+												"value": "@{concat('IF OBJECT_ID(N''dbo.', item().TableName,''',N''U'') IS NOT NULL' \n,\n' \ndelete from ',item().TableName)}",
+												"type": "Expression"
+											},
+											"tableOption": "autoCreate"
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "DS_Dynamic_Facebook_SqlServerTable",
+											"type": "DatasetReference",
+											"parameters": {
+												"SchemaName": "dbo",
+												"TableName": {
+													"value": "@item().TableName",
+													"type": "Expression"
+												},
+												"FBDatabaseName": {
+													"value": "@pipeline().parameters.FBDataBase",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "DS_Demo_SqlServerTable",
+											"type": "DatasetReference",
+											"parameters": {
+												"SchemaName": "dbo",
+												"TableName": {
+													"value": "@item().TableName",
+													"type": "Expression"
+												},
+												"DemoDatabaseName": {
+													"value": "@pipeline().parameters.DemoDatabase",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"FBDataBase": {
+						"type": "string",
+						"defaultValue": "algodbfbqa"
+					},
+					"DemoDatabase": {
+						"type": "string",
+						"defaultValue": "AlgoPlusDevMerged"
+					}
+				},
+				"folder": {
+					"name": "Ali Awan POC"
+				},
+				"annotations": [],
+				"lastPublishTime": "2021-11-15T22:11:26Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/DS_Dynamic_Facebook_SqlServerTable')]",
+				"[concat(variables('factoryId'), '/datasets/DS_Demo_SqlServerTable')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Delete_OrderHistory_file')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Get Metadata1",
+						"type": "GetMetadata",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "DS_BLOB_ARCHIVE_CSV11",
+								"type": "DatasetReference",
+								"parameters": {
+									"FileName": "@pipeline().parameters.FileName",
+									"FolderPath": "@concat('Input/',formatDateTime(utcnow(),'yyyy-MM-dd'))",
+									"deli_Comma": ",",
+									"deli_Tab": "\t"
+								}
+							},
+							"fieldList": [
+								"childItems"
+							],
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "DelimitedTextReadSettings"
+							}
+						}
+					},
+					{
+						"name": "Filter1",
+						"type": "Filter",
+						"dependsOn": [
+							{
+								"activity": "Get Metadata1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Get Metadata1').output.childItems",
+								"type": "Expression"
+							},
+							"condition": {
+								"value": "@contains(item().name,'order_history' )",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Delete1",
+						"type": "Delete",
+						"dependsOn": [
+							{
+								"activity": "Filter1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "DS_BLOB_ARCHIVE_CSV11",
+								"type": "DatasetReference",
+								"parameters": {
+									"FileName": {
+										"value": "@activity('Filter1').output.value[0].name",
+										"type": "Expression"
+									},
+									"FolderPath": "@concat('Input/',formatDateTime(utcnow(),'yyyy-MM-dd'))",
+									"deli_Comma": ",",
+									"deli_Tab": "\t"
+								}
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Set variable1",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Filter1",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "Test",
+							"value": "1"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"FileName": {
+						"type": "string"
+					}
+				},
+				"variables": {
+					"Test": {
+						"type": "String"
+					}
+				},
+				"folder": {
+					"name": "POC"
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-05-30T20:04:20Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/DS_BLOB_ARCHIVE_CSV11')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/FACEBOOK_DATA_DUMP_AND_FILES_MOVEMENT')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Insert Job Run Details",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[log].[SP_InsertETLRunDetails_ADF]",
+							"storedProcedureParameters": {
+								"JobID": {
+									"value": {
+										"value": "@pipeline().parameters.JobHeaderSK",
+										"type": "Expression"
+									},
+									"type": "Int32"
+								},
+								"JobType": {
+									"value": {
+										"value": "Extract",
+										"type": "Expression"
+									},
+									"type": "String"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "Aglo_Plus_FB_EDW_SqlServer_DEV",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "Copy data From Blob To DL",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Insert Job Run Details",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".txt"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_BLOB_ARCHIVE_CSV",
+								"type": "DatasetReference",
+								"parameters": {
+									"FileName": {
+										"value": "@pipeline().parameters.FileName",
+										"type": "Expression"
+									},
+									"FolderPath": {
+										"value": "@concat('Input/',formatDateTime(utcnow(),'yyyy-MM-dd'))",
+										"type": "Expression"
+									},
+									"deli_Comma": ",",
+									"deli_Tab": "\t"
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_DATALAKE_CSV",
+								"type": "DatasetReference",
+								"parameters": {
+									"FolderName": {
+										"value": "LandingZone",
+										"type": "Expression"
+									},
+									"FileName": {
+										"value": "@concat(toUpper(pipeline().parameters.JobCategory),'_',formatDateTime(utcnow(),'yyyyMMdd'),'.csv')",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					},
+					{
+						"name": "Update Detail Run On Success",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "Copy data From Blob To DL",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[log].[SP_UpdateETLRunDetails_ADF]",
+							"storedProcedureParameters": {
+								"JobId": {
+									"value": {
+										"value": "@pipeline().parameters.JobHeaderSK",
+										"type": "Expression"
+									},
+									"type": "Int32"
+								},
+								"JobStatus": {
+									"value": {
+										"value": "@activity('Copy data From Blob To DL').output.executionDetails[0].status",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"LogMsg": {
+									"value": {
+										"value": "@activity('Copy data From Blob To DL').output.errors",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"RowCount": {
+									"value": {
+										"value": "@activity('Copy data From Blob To DL').output.rowsCopied",
+										"type": "Expression"
+									},
+									"type": "Int64"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "Aglo_Plus_FB_EDW_SqlServer_DEV",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "Update Detail Run On Failure",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "Copy data From Blob To DL",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[log].[SP_UpdateETLRunDetails_ADF]",
+							"storedProcedureParameters": {
+								"JobId": {
+									"value": {
+										"value": "@pipeline().parameters.JobHeaderSK",
+										"type": "Expression"
+									},
+									"type": "Int32"
+								},
+								"JobStatus": {
+									"value": {
+										"value": "@activity('Copy data From Blob To DL').output.executionDetails[0].status",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"LogMsg": {
+									"value": {
+										"value": "@replace(activity('Copy data From Blob To DL').error.message,'''',' ')",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"RowCount": {
+									"value": {
+										"value": "0",
+										"type": "Expression"
+									},
+									"type": "Int64"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "Aglo_Plus_FB_EDW_SqlServer_DEV",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "Copy Data To SQL Landing Table",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Insert Details For DB Data Loading",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "SqlServerSink",
+								"preCopyScript": {
+									"value": "@{concat('truncate table land.',if(equals(pipeline().parameters.DataGroupCategory,'Fact'),'FACT',if(equals(pipeline().parameters.DataGroupCategory,'Dimension'),'DIM','')),'_',toUpper(pipeline().parameters.JobCategory))}",
+									"type": "Expression"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_DATALAKE_CSV",
+								"type": "DatasetReference",
+								"parameters": {
+									"FolderName": {
+										"value": "LandingZone",
+										"type": "Expression"
+									},
+									"FileName": {
+										"value": "@concat(toUpper(pipeline().parameters.JobCategory),'_',formatDateTime(utcnow(),'yyyyMMdd'),'.csv')",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_ALGO_PLUS_FB_EDW_DEV_LAND",
+								"type": "DatasetReference",
+								"parameters": {
+									"SchemaName": {
+										"value": "land",
+										"type": "Expression"
+									},
+									"TableName": {
+										"value": "@concat(if(equals(pipeline().parameters.DataGroupCategory,'Fact'),'FACT',if(equals(pipeline().parameters.DataGroupCategory,'Dimension'),'DIM','')),'_',toUpper(pipeline().parameters.JobCategory))",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					},
+					{
+						"name": "Insert Details For DB Data Loading",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "Update Detail Run On Success",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[log].[SP_InsertETLRunDetails_ADF]",
+							"storedProcedureParameters": {
+								"JobID": {
+									"value": {
+										"value": "@pipeline().parameters.JobHeaderSK",
+										"type": "Expression"
+									},
+									"type": "Int32"
+								},
+								"JobType": {
+									"value": {
+										"value": "Load",
+										"type": "Expression"
+									},
+									"type": "String"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "Aglo_Plus_FB_EDW_SqlServer_DEV",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "Update Detail Run On Successfull Data Dump",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "Copy Data To SQL Landing Table",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[log].[SP_UpdateETLRunDetails_ADF]",
+							"storedProcedureParameters": {
+								"JobId": {
+									"value": {
+										"value": "@pipeline().parameters.JobHeaderSK",
+										"type": "Expression"
+									},
+									"type": "Int32"
+								},
+								"JobStatus": {
+									"value": {
+										"value": "@activity('Copy Data To SQL Landing Table').output.executionDetails[0].status",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"LogMsg": {
+									"value": {
+										"value": "@activity('Copy Data To SQL Landing Table').output.errors",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"RowCount": {
+									"value": {
+										"value": "@activity('Copy Data To SQL Landing Table').output.rowsCopied",
+										"type": "Expression"
+									},
+									"type": "Int64"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "Aglo_Plus_FB_EDW_SqlServer_DEV",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "Move Files To Archived Folder AT DL",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Copy Data To SQL Landing Table",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "FACEBOOK_MOVE_TO_ARCHIVE_FOLDER",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"JobCategory": {
+									"value": "@pipeline().parameters.JobCategory",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "Move Files To Archived Folder At Blob",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Copy Data To SQL Landing Table",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "FACEBOOK_MOVE_BLOB_FILES_TO_ARCHIVE",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"JobName": {
+									"value": "@pipeline().parameters.JobName",
+									"type": "Expression"
+								},
+								"FileName": {
+									"value": "@pipeline().parameters.FileName",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "Update Detail Run On Data Dump Failure",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "Copy Data To SQL Landing Table",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[log].[SP_UpdateETLRunDetails_ADF]",
+							"storedProcedureParameters": {
+								"JobId": {
+									"value": {
+										"value": "@pipeline().parameters.JobHeaderSK",
+										"type": "Expression"
+									},
+									"type": "Int32"
+								},
+								"JobStatus": {
+									"value": {
+										"value": "@activity('Copy Data To SQL Landing Table').output.executionDetails[0].status",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"LogMsg": {
+									"value": {
+										"value": "@replace(activity('Copy Data To SQL Landing Table').error.message,'''',' ')",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"RowCount": {
+									"value": {
+										"value": "0",
+										"type": "Expression"
+									},
+									"type": "Int64"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "Aglo_Plus_FB_EDW_SqlServer_DEV",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "Execute Land to Stage SP",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "Update Detail Run On Successfull Data Dump",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": {
+								"value": "@concat('stg.SP_LOAD_',if(equals(pipeline().parameters.DataGroupCategory,'Dimension'),'DIM','FACT'),'_',toUpper(pipeline().parameters.JobCategory))",
+								"type": "Expression"
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "Aglo_Plus_FB_EDW_SqlServer_DEV",
+							"type": "LinkedServiceReference"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"JobName": {
+						"type": "string"
+					},
+					"FileName": {
+						"type": "string"
+					},
+					"JobHeaderSK": {
+						"type": "string"
+					},
+					"JobCategory": {
+						"type": "string"
+					},
+					"DataGroupCategory": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "Facebook Pipelines"
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-11-07T11:20:33Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/FACEBOOK_GENERATE_FORECAST_ENGINE_OUTPUT_CSV_FILE')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy fcst_pos_forecast_data to CSV file",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "SqlServerSource",
+								"sqlReaderQuery": {
+									"value": "select  * from dbo.fcst_pos_forecast_data",
+									"type": "Expression"
+								},
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".txt"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "seasonality_type",
+											"type": "Int32",
+											"physicalType": "int"
+										},
+										"sink": {
+											"name": "seasonality_type",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "toolbox_forecast_type",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "toolbox_forecast_type",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "customer_code",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "customer_code",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "item_code",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "item_code",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "week_date",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "week_date",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "week_number",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "week_number",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "quantity",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "quantity",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "seasonal_factor",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "seasonal_factor",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "promotional_factor",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "promotional_factor",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "run_date",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "run_date",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "wma_use_percent",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "wma_use_percent",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "seasonality_curve_percent",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "seasonality_curve_percent",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "tema_use_percent",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "tema_use_percent",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "dema_use_percent",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "dema_use_percent",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "forecast_type",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "forecast_type",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "placement",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "placement",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "mfoq_look_forward_window",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "mfoq_look_forward_window",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "mfoq_use_percent",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "mfoq_use_percent",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "on_order_quantity",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "on_order_quantity",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "amazon_pos_forecast",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "amazon_pos_forecast",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "vendor_central_pos_forecast",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "vendor_central_pos_forecast",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "forecast_input",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "forecast_input",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "future_promotional_factors",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "future_promotional_factors",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "future_promo_factor_dates",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "future_promo_factor_dates",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "in_transit_quantity",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "in_transit_quantity",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "lookback_window",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "lookback_window",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "ema_use_percent",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "ema_use_percent",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "shipment_blend_percentage",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "shipment_blend_percentage",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "promotionality_curve_percent",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "promotionality_curve_percent",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "item_type",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "item_type",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "future_seasonal_factors",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "future_seasonal_factors",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "category",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "category",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "sma_use_percent",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "sma_use_percent",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "pos_blend_percentage",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "pos_blend_percentage",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "wma_weights",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "wma_weights",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "release_type",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "release_type",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "de_promo_quantity",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "de_promo_quantity",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "de_promo_and_de_season_quantity",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "de_promo_and_de_season_quantity",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "sma_forecast",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "sma_forecast",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "wma_forecast",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "wma_forecast",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "ema_forecast",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "ema_forecast",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "dema_forecast",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "dema_forecast",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "tema_forecast",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "tema_forecast",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "mfoq_forecast",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "mfoq_forecast",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "combined_and_scaled_forecast",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "combined_and_scaled_forecast",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "merged_forecast",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "merged_forecast",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "reseasonalized_forecast",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "reseasonalized_forecast",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "reseason_and_repromo_forecast",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "reseason_and_repromo_forecast",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "algo_batch_id",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "algo_batch_id",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "algo_created_date",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "algo_created_date",
+											"type": "String",
+											"physicalType": "String"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_FB_QA_ALGO_APP_DB",
+								"type": "DatasetReference",
+								"parameters": {
+									"TableName": "fcst_pos_forecast_data"
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_DATALAKE_CSV",
+								"type": "DatasetReference",
+								"parameters": {
+									"FolderName": "SharedZone",
+									"FileName": {
+										"value": "@concat('output_forecast_engine_',utcnow(),'.csv')",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "Facebook Pipelines"
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-11-07T11:20:33Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/DS_FB_QA_ALGO_APP_DB')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/FACEBOOK_GET_DATA_FROM_ALGO_PLUS_APP')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy DIM ITEM from APP",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "SqlServerSource",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"sink": {
+								"type": "SqlServerSink",
+								"preCopyScript": "truncate table dbo.DIM_ITEM_APP;",
+								"tableOption": "autoCreate",
+								"disableMetricsCollection": false
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "ITEM_KEY",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "ITEM_KEY",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "SKU",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "SKU",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "PRODUCT_DESCRIPTION",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "PRODUCT_DESCRIPTION",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "Brand",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "Brand",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "PRODUCT_GROUP",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "PRODUCT_GROUP",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "product_family",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "product_family",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "parent_product",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "parent_product",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "PRODUCT_STATUS",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "PRODUCT_STATUS",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "PRODUCT_CATEGORY",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "PRODUCT_CATEGORY",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "MSRP",
+											"type": "Decimal",
+											"physicalType": "decimal",
+											"scale": 4,
+											"precision": 18
+										},
+										"sink": {
+											"name": "MSRP",
+											"type": "Decimal",
+											"physicalType": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"name": "COST",
+											"type": "Decimal",
+											"physicalType": "decimal",
+											"scale": 4,
+											"precision": 18
+										},
+										"sink": {
+											"name": "COST",
+											"type": "Decimal",
+											"physicalType": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"name": "COLOR",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "COLOR",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "CAPACITY",
+											"type": "Int64",
+											"physicalType": "bigint"
+										},
+										"sink": {
+											"name": "CAPACITY",
+											"type": "Int64",
+											"physicalType": "Int64"
+										}
+									},
+									{
+										"source": {
+											"name": "SCREEN_SIZE",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "SCREEN_SIZE",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "STREET_DATE",
+											"type": "DateTime",
+											"physicalType": "datetime2"
+										},
+										"sink": {
+											"name": "STREET_DATE",
+											"type": "DateTime",
+											"physicalType": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"name": "ACCY_TYPE",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "ACCY_TYPE",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "LAST_SOLD_WEEK_END_DATE",
+											"type": "DateTime",
+											"physicalType": "date"
+										},
+										"sink": {
+											"name": "LAST_SOLD_WEEK_END_DATE",
+											"type": "DateTime",
+											"physicalType": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"name": "LAST_SOLD_WEEK_NO",
+											"type": "Int32",
+											"physicalType": "int"
+										},
+										"sink": {
+											"name": "LAST_SOLD_WEEK_NO",
+											"type": "Int32",
+											"physicalType": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "SKU_IN_HISTORIC_SALES",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "SKU_IN_HISTORIC_SALES",
+											"type": "String",
+											"physicalType": "String"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_FB_QA_ALGO_APP_DB",
+								"type": "DatasetReference",
+								"parameters": {
+									"TableName": "V_DIM_ITEM"
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_ALGO_PLUS_FB_EDW_DEV_LAND",
+								"type": "DatasetReference",
+								"parameters": {
+									"SchemaName": "dbo",
+									"TableName": "DIM_ITEM_APP"
+								}
+							}
+						]
+					},
+					{
+						"name": "Copy DIM RETAILER from APP",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "SqlServerSource",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"sink": {
+								"type": "SqlServerSink",
+								"preCopyScript": "truncate table dbo.DIM_RETAILER_APP",
+								"tableOption": "autoCreate",
+								"disableMetricsCollection": false
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "RETAILER_KEY",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "RETAILER_KEY",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "SALESFORCE_ID",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "SALESFORCE_ID",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "FRL_ACCOUNT_NAME",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "FRL_ACCOUNT_NAME",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "CHANNEL",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "CHANNEL",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "region",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "region",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "COUNTRY_CODE",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "COUNTRY_CODE",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "COUNTRY_NAME",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "COUNTRY_NAME",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "DISTRIBUTOR_SFID",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "DISTRIBUTOR_SFID",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "DISTRIBUTOR",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "DISTRIBUTOR",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "PARTNER_TYPE",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "PARTNER_TYPE",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "STATUS",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "STATUS",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "PARENT_SFID",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "PARENT_SFID",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "PARENT_ACCOUNT",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "PARENT_ACCOUNT",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "SUB_REGION",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "SUB_REGION",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "SALES_REPORTING",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "SALES_REPORTING",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "LEAD_TIME_DAYS",
+											"type": "Int32",
+											"physicalType": "int"
+										},
+										"sink": {
+											"name": "LEAD_TIME_DAYS",
+											"type": "Int32",
+											"physicalType": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "DISTI_LEAD_TIME_DAYS",
+											"type": "Int32",
+											"physicalType": "int"
+										},
+										"sink": {
+											"name": "DISTI_LEAD_TIME_DAYS",
+											"type": "Int32",
+											"physicalType": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "COUNTRY_PROPER",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "COUNTRY_PROPER",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "REGION_PROPER",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "REGION_PROPER",
+											"type": "String",
+											"physicalType": "String"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_FB_QA_ALGO_APP_DB",
+								"type": "DatasetReference",
+								"parameters": {
+									"TableName": "V_DIM_RETAILER"
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_ALGO_PLUS_FB_EDW_DEV_LAND",
+								"type": "DatasetReference",
+								"parameters": {
+									"SchemaName": "dbo",
+									"TableName": "DIM_RETAILER_APP"
+								}
+							}
+						]
+					},
+					{
+						"name": "Copy FB FORECAST MASTER from APP",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Copy LookUp Measure",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "SqlServerSource",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"sink": {
+								"type": "SqlServerSink",
+								"preCopyScript": "truncate table dbo.FB_Forecast_MASTER_APP;",
+								"tableOption": "autoCreate",
+								"disableMetricsCollection": false
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "item_key",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "item_key",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "Retailer_Key",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "Retailer_Key",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "MeasureName",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "MeasureName",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "MeasureId",
+											"type": "Int64",
+											"physicalType": "bigint"
+										},
+										"sink": {
+											"name": "MeasureId",
+											"type": "Int64",
+											"physicalType": "Int64"
+										}
+									},
+									{
+										"source": {
+											"name": "Forecast_Value",
+											"type": "Decimal",
+											"physicalType": "decimal",
+											"scale": 4,
+											"precision": 18
+										},
+										"sink": {
+											"name": "Forecast_Value",
+											"type": "Decimal",
+											"physicalType": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"name": "weekEndDate",
+											"type": "DateTime",
+											"physicalType": "datetime2"
+										},
+										"sink": {
+											"name": "weekEndDate",
+											"type": "DateTime",
+											"physicalType": "DateTime"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_FB_QA_ALGO_APP_DB",
+								"type": "DatasetReference",
+								"parameters": {
+									"TableName": "V_FbForecast_MASTER"
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_ALGO_PLUS_FB_EDW_DEV_LAND",
+								"type": "DatasetReference",
+								"parameters": {
+									"SchemaName": "dbo",
+									"TableName": "FB_Forecast_MASTER_APP"
+								}
+							}
+						]
+					},
+					{
+						"name": "Copy PROMOTION MASTER from APP",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "SqlServerSource",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"sink": {
+								"type": "SqlServerSink",
+								"preCopyScript": "truncate table dbo.DIM_PROMOTION_APP;",
+								"tableOption": "autoCreate",
+								"disableMetricsCollection": false
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "PROMOTION_KEY",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "PROMOTION_KEY",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "COUNTRY",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "COUNTRY",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "PROMO_NUMBER",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "PROMO_NUMBER",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "PROMO_NAME",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "PROMO_NAME",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "PROMO_EVENT",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "PROMO_EVENT",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "MISC_EVENT_DETAIL",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "MISC_EVENT_DETAIL",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "REGION",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "REGION",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "OFFER_TYPE",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "OFFER_TYPE",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "OFFER_VALUE_TO_CONSUMER_LOCAL_CURR",
+											"type": "Decimal",
+											"physicalType": "decimal",
+											"scale": 4,
+											"precision": 18
+										},
+										"sink": {
+											"name": "OFFER_VALUE_TO_CONSUMER_LOCAL_CURR",
+											"type": "Decimal",
+											"physicalType": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"name": "RETAILER_KEY",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "RETAILER_KEY",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "RETAILER_ID",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "RETAILER_ID",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "END_CUSTOMER",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "END_CUSTOMER",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "ITEM_KEY",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "ITEM_KEY",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "ITEM_DESCRIPTION",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "ITEM_DESCRIPTION",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "CURRENCY",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "CURRENCY",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "REBATE_AMOUNT",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "REBATE_AMOUNT",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "PROMO_START_DATE",
+											"type": "DateTime",
+											"physicalType": "datetime2"
+										},
+										"sink": {
+											"name": "PROMO_START_DATE",
+											"type": "DateTime",
+											"physicalType": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"name": "PROMO_END_DATE",
+											"type": "DateTime",
+											"physicalType": "datetime2"
+										},
+										"sink": {
+											"name": "PROMO_END_DATE",
+											"type": "DateTime",
+											"physicalType": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"name": "PROMO_START_WEEKEND_DATE",
+											"type": "DateTime",
+											"physicalType": "date"
+										},
+										"sink": {
+											"name": "PROMO_START_WEEKEND_DATE",
+											"type": "DateTime",
+											"physicalType": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"name": "PROMO_END_WEEKEND_DATE",
+											"type": "DateTime",
+											"physicalType": "date"
+										},
+										"sink": {
+											"name": "PROMO_END_WEEKEND_DATE",
+											"type": "DateTime",
+											"physicalType": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"name": "PROMO_STATUS",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "PROMO_STATUS",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "PROMO_CREATION_DATE",
+											"type": "DateTime",
+											"physicalType": "datetime2"
+										},
+										"sink": {
+											"name": "PROMO_CREATION_DATE",
+											"type": "DateTime",
+											"physicalType": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"name": "PROMO_COMMENTS",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "PROMO_COMMENTS",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "PROMO_DETAIL",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "PROMO_DETAIL",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "PRODUCT_LINE",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "PRODUCT_LINE",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "PROGRAM_NAME",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "PROGRAM_NAME",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "STACKABLE",
+											"type": "Boolean",
+											"physicalType": "bit"
+										},
+										"sink": {
+											"name": "STACKABLE",
+											"type": "Boolean",
+											"physicalType": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "MSRP",
+											"type": "Decimal",
+											"physicalType": "decimal",
+											"scale": 4,
+											"precision": 18
+										},
+										"sink": {
+											"name": "MSRP",
+											"type": "Decimal",
+											"physicalType": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"name": "MSRP_CURRENCY",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "MSRP_CURRENCY",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "PROMO_DAYS",
+											"type": "Int32",
+											"physicalType": "int"
+										},
+										"sink": {
+											"name": "PROMO_DAYS",
+											"type": "Int32",
+											"physicalType": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "DISCOUNT_AMOUNT",
+											"type": "Decimal",
+											"physicalType": "decimal",
+											"scale": 15,
+											"precision": 38
+										},
+										"sink": {
+											"name": "DISCOUNT_AMOUNT",
+											"type": "Decimal",
+											"physicalType": "Decimal"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_FB_QA_ALGO_APP_DB",
+								"type": "DatasetReference",
+								"parameters": {
+									"TableName": "V_PROMOTION"
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_ALGO_PLUS_FB_EDW_DEV_LAND",
+								"type": "DatasetReference",
+								"parameters": {
+									"SchemaName": "dbo",
+									"TableName": "DIM_PROMOTION_APP"
+								}
+							}
+						]
+					},
+					{
+						"name": "Copy LookUp Measure",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "SqlServerSource",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"sink": {
+								"type": "SqlServerSink",
+								"preCopyScript": "truncate table dbo.LKP_MEASURE_APP",
+								"tableOption": "autoCreate",
+								"disableMetricsCollection": false
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "MeasureID",
+											"type": "Int64",
+											"physicalType": "bigint"
+										},
+										"sink": {
+											"name": "MEASURE_ID",
+											"type": "Int64",
+											"physicalType": "bigint"
+										}
+									},
+									{
+										"source": {
+											"name": "MeasureName",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "MEASURE_NAME",
+											"type": "String",
+											"physicalType": "nvarchar"
+										}
+									},
+									{
+										"source": {
+											"name": "ParentId",
+											"type": "Int64",
+											"physicalType": "bigint"
+										},
+										"sink": {
+											"name": "PARENT_ID",
+											"type": "Int64",
+											"physicalType": "bigint"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_FB_QA_ALGO_APP_DB",
+								"type": "DatasetReference",
+								"parameters": {
+									"TableName": "V_LKP_MEASURE"
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_ALGO_PLUS_FB_EDW_DEV_LAND",
+								"type": "DatasetReference",
+								"parameters": {
+									"SchemaName": "dbo",
+									"TableName": "LKP_MEASURE_APP"
+								}
+							}
+						]
+					},
+					{
+						"name": "Copy UserInterfaceActivity from APP",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "SqlServerSource",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"sink": {
+								"type": "SqlServerSink",
+								"preCopyScript": "truncate table USER_INTERFACE_ACTIVITY_APP;",
+								"tableOption": "autoCreate",
+								"disableMetricsCollection": false
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "UserInterfaceActivityId",
+											"type": "Int64",
+											"physicalType": "bigint"
+										},
+										"sink": {
+											"name": "UserInterfaceActivityId",
+											"type": "Int64",
+											"physicalType": "Int64"
+										}
+									},
+									{
+										"source": {
+											"name": "UserId",
+											"type": "Int64",
+											"physicalType": "bigint"
+										},
+										"sink": {
+											"name": "UserId",
+											"type": "Int64",
+											"physicalType": "Int64"
+										}
+									},
+									{
+										"source": {
+											"name": "MenuId",
+											"type": "Int64",
+											"physicalType": "bigint"
+										},
+										"sink": {
+											"name": "MenuId",
+											"type": "Int64",
+											"physicalType": "Int64"
+										}
+									},
+									{
+										"source": {
+											"name": "CreatedById",
+											"type": "Int64",
+											"physicalType": "bigint"
+										},
+										"sink": {
+											"name": "CreatedById",
+											"type": "Int64",
+											"physicalType": "Int64"
+										}
+									},
+									{
+										"source": {
+											"name": "CreatedDate",
+											"type": "DateTime",
+											"physicalType": "datetime2"
+										},
+										"sink": {
+											"name": "CreatedDate",
+											"type": "DateTime",
+											"physicalType": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"name": "ModifiedById",
+											"type": "Int64",
+											"physicalType": "bigint"
+										},
+										"sink": {
+											"name": "ModifiedById",
+											"type": "Int64",
+											"physicalType": "Int64"
+										}
+									},
+									{
+										"source": {
+											"name": "ModifiedDate",
+											"type": "DateTime",
+											"physicalType": "datetime2"
+										},
+										"sink": {
+											"name": "ModifiedDate",
+											"type": "DateTime",
+											"physicalType": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"name": "Active",
+											"type": "Boolean",
+											"physicalType": "bit"
+										},
+										"sink": {
+											"name": "Active",
+											"type": "Boolean",
+											"physicalType": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "ClientId",
+											"type": "Int64",
+											"physicalType": "bigint"
+										},
+										"sink": {
+											"name": "ClientId",
+											"type": "Int64",
+											"physicalType": "Int64"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_FB_QA_ALGO_APP_DB",
+								"type": "DatasetReference",
+								"parameters": {
+									"TableName": "userinterfaceactivity"
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_ALGO_PLUS_FB_EDW_DEV_LAND",
+								"type": "DatasetReference",
+								"parameters": {
+									"SchemaName": "dbo",
+									"TableName": "USER_INTERFACE_ACTIVITY_APP"
+								}
+							}
+						]
+					},
+					{
+						"name": "Copy UserActivity from APP",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "SqlServerSource",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"sink": {
+								"type": "SqlServerSink",
+								"preCopyScript": "truncate table USER_ACTIVITY_APP",
+								"tableOption": "autoCreate",
+								"disableMetricsCollection": false
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "UserActivityId",
+											"type": "Int64",
+											"physicalType": "bigint"
+										},
+										"sink": {
+											"name": "UserActivityId",
+											"type": "Int64",
+											"physicalType": "Int64"
+										}
+									},
+									{
+										"source": {
+											"name": "UserId",
+											"type": "Int64",
+											"physicalType": "bigint"
+										},
+										"sink": {
+											"name": "UserId",
+											"type": "Int64",
+											"physicalType": "Int64"
+										}
+									},
+									{
+										"source": {
+											"name": "UserActivityName",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "UserActivityName",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "UserActivityDescription",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "UserActivityDescription",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "CreatedDate",
+											"type": "DateTime",
+											"physicalType": "datetime2"
+										},
+										"sink": {
+											"name": "CreatedDate",
+											"type": "DateTime",
+											"physicalType": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"name": "Active",
+											"type": "Boolean",
+											"physicalType": "bit"
+										},
+										"sink": {
+											"name": "Active",
+											"type": "Boolean",
+											"physicalType": "Boolean"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_FB_QA_ALGO_APP_DB",
+								"type": "DatasetReference",
+								"parameters": {
+									"TableName": "useractivity"
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_ALGO_PLUS_FB_EDW_DEV_LAND",
+								"type": "DatasetReference",
+								"parameters": {
+									"SchemaName": "dbo",
+									"TableName": "USER_ACTIVITY_APP"
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "Facebook Pipelines"
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-11-07T11:20:33Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/DS_FB_QA_ALGO_APP_DB')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/FACEBOOK_GET_DATA_FROM_ALGO_PLUS_APP_ALGO_BASE_LINE_FCST')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy Baseline Fcst to EDW",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "SqlServerSource",
+								"sqlReaderQuery": "select  * from fcst_pos_forecast_data\nwhere toolbox_forecast_type='Algo Forecast'",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"sink": {
+								"type": "SqlServerSink",
+								"preCopyScript": "IF OBJECT_ID(N'dbo.FACT_ALGO_BASE_LINE_FORECAST_APP', N'U') IS NOT NULL\n TRUNCATE TABLE [dbo].[FACT_ALGO_BASE_LINE_FORECAST_APP];  "
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "seasonality_type",
+											"type": "Int32",
+											"physicalType": "int"
+										},
+										"sink": {
+											"name": "seasonality_type",
+											"type": "Int32",
+											"physicalType": "int"
+										}
+									},
+									{
+										"source": {
+											"name": "toolbox_forecast_type",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "toolbox_forecast_type",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "customer_code",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "RETAILER_KEY",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "item_code",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "ITEM_KEY",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "week_date",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "WEEK_END_DATE",
+											"type": "String",
+											"physicalType": "nvarchar"
+										}
+									},
+									{
+										"source": {
+											"name": "week_number",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "WEEK_NUMBER",
+											"type": "String",
+											"physicalType": "nvarchar"
+										}
+									},
+									{
+										"source": {
+											"name": "quantity",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "QUANTITY",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "seasonal_factor",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "seasonal_factor",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "promotional_factor",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "promotional_factor",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "run_date",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "run_date",
+											"type": "String",
+											"physicalType": "nvarchar"
+										}
+									},
+									{
+										"source": {
+											"name": "wma_use_percent",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "wma_use_percent",
+											"type": "String",
+											"physicalType": "nvarchar"
+										}
+									},
+									{
+										"source": {
+											"name": "seasonality_curve_percent",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "seasonality_curve_percent",
+											"type": "String",
+											"physicalType": "nvarchar"
+										}
+									},
+									{
+										"source": {
+											"name": "tema_use_percent",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "tema_use_percent",
+											"type": "String",
+											"physicalType": "nvarchar"
+										}
+									},
+									{
+										"source": {
+											"name": "dema_use_percent",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "dema_use_percent",
+											"type": "String",
+											"physicalType": "nvarchar"
+										}
+									},
+									{
+										"source": {
+											"name": "forecast_type",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "forecast_type",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "placement",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "placement",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "mfoq_look_forward_window",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "mfoq_look_forward_window",
+											"type": "String",
+											"physicalType": "nvarchar"
+										}
+									},
+									{
+										"source": {
+											"name": "mfoq_use_percent",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "mfoq_use_percent",
+											"type": "String",
+											"physicalType": "nvarchar"
+										}
+									},
+									{
+										"source": {
+											"name": "on_order_quantity",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "on_order_quantity",
+											"type": "String",
+											"physicalType": "nvarchar"
+										}
+									},
+									{
+										"source": {
+											"name": "amazon_pos_forecast",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "amazon_pos_forecast",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "vendor_central_pos_forecast",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "vendor_central_pos_forecast",
+											"type": "String",
+											"physicalType": "nvarchar"
+										}
+									},
+									{
+										"source": {
+											"name": "forecast_input",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "forecast_input",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "future_promotional_factors",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "future_promotional_factors",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "future_promo_factor_dates",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "future_promo_factor_dates",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "in_transit_quantity",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "in_transit_quantity",
+											"type": "String",
+											"physicalType": "nvarchar"
+										}
+									},
+									{
+										"source": {
+											"name": "lookback_window",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "lookback_window",
+											"type": "String",
+											"physicalType": "nvarchar"
+										}
+									},
+									{
+										"source": {
+											"name": "ema_use_percent",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "ema_use_percent",
+											"type": "String",
+											"physicalType": "nvarchar"
+										}
+									},
+									{
+										"source": {
+											"name": "shipment_blend_percentage",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "shipment_blend_percentage",
+											"type": "String",
+											"physicalType": "nvarchar"
+										}
+									},
+									{
+										"source": {
+											"name": "promotionality_curve_percent",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "promotionality_curve_percent",
+											"type": "String",
+											"physicalType": "nvarchar"
+										}
+									},
+									{
+										"source": {
+											"name": "item_type",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "item_type",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "future_seasonal_factors",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "future_seasonal_factors",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "category",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "category",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "sma_use_percent",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "sma_use_percent",
+											"type": "String",
+											"physicalType": "nvarchar"
+										}
+									},
+									{
+										"source": {
+											"name": "pos_blend_percentage",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "pos_blend_percentage",
+											"type": "String",
+											"physicalType": "nvarchar"
+										}
+									},
+									{
+										"source": {
+											"name": "wma_weights",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "wma_weights",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "release_type",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "release_type",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "de_promo_quantity",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "de_promo_quantity",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "de_promo_and_de_season_quantity",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "de_promo_and_de_season_quantity",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "sma_forecast",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "sma_forecast",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "wma_forecast",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "wma_forecast",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "ema_forecast",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "ema_forecast",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "dema_forecast",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "dema_forecast",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "tema_forecast",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "tema_forecast",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "mfoq_forecast",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "mfoq_forecast",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "combined_and_scaled_forecast",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "combined_and_scaled_forecast",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "merged_forecast",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "merged_forecast",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "reseasonalized_forecast",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "reseasonalized_forecast",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "reseason_and_repromo_forecast",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "RESEASON_AND_REPROMO_FORECAST_AMOUNT",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "algo_batch_id",
+											"type": "String",
+											"physicalType": "varchar"
+										},
+										"sink": {
+											"name": "algo_batch_id",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "algo_created_date",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "algo_created_date",
+											"type": "String",
+											"physicalType": "nvarchar"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_FB_QA_ALGO_APP_DB",
+								"type": "DatasetReference",
+								"parameters": {
+									"TableName": "fcst_pos_forecast_data"
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_ALGO_PLUS_FB_EDW_DEV_LAND",
+								"type": "DatasetReference",
+								"parameters": {
+									"SchemaName": "dbo",
+									"TableName": "FACT_ALGO_BASE_LINE_FORECAST_APP"
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "Facebook Pipelines"
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-11-07T11:20:33Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/DS_FB_QA_ALGO_APP_DB')]"
+			]
+		}
+	]
+}

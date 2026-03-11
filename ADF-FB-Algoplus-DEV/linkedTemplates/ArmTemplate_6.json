@@ -1,0 +1,1662 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "ADF-FB-Algoplus-DEV"
+		},
+		"Meta FC Narrative File Trigger_properties_typeProperties_scope": {
+			"type": "string",
+			"defaultValue": "/subscriptions/3b96ccbc-e2f4-47c3-b59a-fe29e5359266/resourceGroups/rg-facebook-sftp/providers/Microsoft.Storage/storageAccounts/sftpstoragefacebook"
+		},
+		"Meta Sell Out Feed File Trigger_properties_typeProperties_scope": {
+			"type": "string",
+			"defaultValue": "/subscriptions/3b96ccbc-e2f4-47c3-b59a-fe29e5359266/resourceGroups/rg-facebook-sftp/providers/Microsoft.Storage/storageAccounts/sftpstoragefacebook"
+		},
+		"Order_History_properties_Delete_OrderHistory_file_parameters_FileName": {
+			"type": "string",
+			"defaultValue": "facebook_e2open.BIN.b2b_order_history_"
+		},
+		"order_history_delete_properties_typeProperties_scope": {
+			"type": "string",
+			"defaultValue": "/subscriptions/3b96ccbc-e2f4-47c3-b59a-fe29e5359266/resourceGroups/rg-facebook-sftp/providers/Microsoft.Storage/storageAccounts/sftpstoragefacebook"
+		},
+		"SyncForecastDataFullTrigger_properties_FACEBOOK_SYNC_DATA_FULL_MODE_parameters_ExecutionMode": {
+			"type": "string",
+			"defaultValue": "Full"
+		},
+		"SyncForecastDataTrigger_properties_FACEBOOK_SYNC_DATA_parameters_ExecutionMode": {
+			"type": "string",
+			"defaultValue": "Delta"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/Planner Performance Monitoring Trigger11_30')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "META_PLANNER_PERFORMANCE_MONITORING",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2022-10-26T16:30:00Z",
+						"timeZone": "UTC",
+						"schedule": {
+							"minutes": [
+								30
+							],
+							"hours": [
+								17
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Planner Performance Monitoring Trigger4_00')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "META_PLANNER_PERFORMANCE_MONITORING",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2022-10-26T16:30:00Z",
+						"timeZone": "UTC",
+						"schedule": {
+							"minutes": [
+								0
+							],
+							"hours": [
+								22
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/FACEBOOK_DATA_EXTRACTION')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Get Metadata",
+						"type": "GetMetadata",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "DS_BLOB_Folder",
+								"type": "DatasetReference",
+								"parameters": {
+									"FolderPath": {
+										"value": "@concat('Input/',formatDateTime(utcnow(),'yyyy-MM-dd'))",
+										"type": "Expression"
+									}
+								}
+							},
+							"fieldList": [
+								"childItems"
+							],
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "DelimitedTextReadSettings"
+							}
+						}
+					},
+					{
+						"name": "Iterate through Each Entity",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Get Metadata",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Get Metadata').output.childItems",
+								"type": "Expression"
+							},
+							"isSequential": false,
+							"batchCount": 2,
+							"activities": [
+								{
+									"name": "Data Dump and Files Movement",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "FACEBOOK_DATA_DUMP_AND_FILES_MOVEMENT",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"JobName": {
+												"value": "@if(equals(substring(item().name,20,5),'promo'),'promo',if(equals(substring(item().name,20,8),'webstore'),'webstore',if(equals(substring(item().name,20,11),'pos_st_data'),'pos_st_data',if(equals(substring(item().name,20,24),'in_transit_on_hand_order'),'in_transit_on_hand_order',if(equals(substring(item().name,20,17),'b2b_order_history'),'b2b_order_history',if(equals(substring(item().name,20,14),'product_master'),'product_master',''))))))",
+												"type": "Expression"
+											},
+											"FileName": {
+												"value": "@item().name",
+												"type": "Expression"
+											},
+											"JobHeaderSK": {
+												"value": "@if(equals(substring(item().name,20,5),'promo'),1,if(equals(substring(item().name,20,8),'webstore'),2,if(equals(substring(item().name,20,11),'pos_st_data'),3,if(equals(substring(item().name,20,24),'in_transit_on_hand_order'),4,if(equals(substring(item().name,20,17),'b2b_order_history'),5,if(equals(substring(item().name,20,14),'product_master'),6,''))))))",
+												"type": "Expression"
+											},
+											"JobCategory": {
+												"value": "@if(equals(substring(item().name,20,5),'promo'),'Promotion',if(equals(substring(item().name,20,8),'webstore'),'Traffic',if(equals(substring(item().name,20,11),'pos_st_data'),'Sale',if(equals(substring(item().name,20,24),'in_transit_on_hand_order'),'Inventory',if(equals(substring(item().name,20,17),'b2b_order_history'),'Order',if(equals(substring(item().name,20,14),'product_master'),'Product',''))))))",
+												"type": "Expression"
+											},
+											"DataGroupCategory": {
+												"value": "@if(equals(substring(item().name,20,5),'promo'),'Dimension',if(equals(substring(item().name,20,8),'webstore'),'Fact',if(equals(substring(item().name,20,11),'pos_st_data'),'Fact',if(equals(substring(item().name,20,24),'in_transit_on_hand_order'),'Fact',if(equals(substring(item().name,20,17),'b2b_order_history'),'Fact',if(equals(substring(item().name,20,14),'product_master'),'Dimension',''))))))",
+												"type": "Expression"
+											}
+										}
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "Folder Not Exists",
+						"type": "Wait",
+						"dependsOn": [
+							{
+								"activity": "Get Metadata",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"waitTimeInSeconds": 1
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "Facebook Pipelines"
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-11-07T11:20:33Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/FACEBOOK_SYNC_DATA')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "FACEBOOK_GET_FCST_DATA_FROM_ALGO_PLUS_APP_PRODUCTION_DB",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "FACEBOOK_GET_FCST_DATA_FROM_ALGO_PLUS_APP_PROD_DB",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"ExecutionMode": {
+									"value": "@pipeline().parameters.ExecutionMode",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "FACEBOOK_PROCESS_FORECAST_TABULAR_MODEL",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Execute SP_LOAD_FACT_INVENTORY_PLANS",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "FACEBOOK_PROCESS_FORECAST_TABULAR_MODEL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					},
+					{
+						"name": "FB_SYNC_PIPELINE_FAILURE_EMAIL",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "FACEBOOK_GET_FCST_DATA_FROM_ALGO_PLUS_APP_PRODUCTION_DB",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "FB_SYNC_PIPELINE_FAILURE_EMAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					},
+					{
+						"name": "FB_SYNC_PIPELINE_FAILURE_EMAIL_1",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "FACEBOOK_PROCESS_FORECAST_TABULAR_MODEL",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "FB_SYNC_PIPELINE_FAILURE_EMAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					},
+					{
+						"name": "Execute SP_LOAD_FACT_INVENTORY_PLANS",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "FACEBOOK_GET_FCST_DATA_FROM_ALGO_PLUS_APP_PRODUCTION_DB",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[dbo].[SP_LOAD_FACT_INVENTORY_PLANS]"
+						},
+						"linkedServiceName": {
+							"referenceName": "Aglo_Plus_FB_EDW_SqlServer_DEV",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "FB_SYNC_PIPELINE_FAILURE_EMAIL_2",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Execute SP_LOAD_FACT_INVENTORY_PLANS",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "FB_SYNC_PIPELINE_FAILURE_EMAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"ExecutionMode": {
+						"type": "string",
+						"defaultValue": "Delta"
+					}
+				},
+				"folder": {
+					"name": "Facebook Pipelines"
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-11-07T11:20:33Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/FACEBOOK_SYNC_DATA_FULL_MODE')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "FACEBOOK_GET_FCST_DATA_FROM_ALGO_PLUS_APP_PRODUCTION_DB",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Truncate Table",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "FACEBOOK_GET_FCST_DATA_FROM_ALGO_PLUS_APP_PROD_DB",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"ExecutionMode": {
+									"value": "@pipeline().parameters.ExecutionMode",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "FACEBOOK_PROCESS_FORECAST_TABULAR_MODEL",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Execute SP_LOAD_FACT_INVENTORY_PLANS",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "FACEBOOK_PROCESS_FORECAST_TABULAR_MODEL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					},
+					{
+						"name": "FB_SYNC_PIPELINE_FAILURE_EMAIL",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "FACEBOOK_GET_FCST_DATA_FROM_ALGO_PLUS_APP_PRODUCTION_DB",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "FB_SYNC_PIPELINE_FAILURE_EMAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					},
+					{
+						"name": "FB_SYNC_PIPELINE_FAILURE_EMAIL_1",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "FACEBOOK_PROCESS_FORECAST_TABULAR_MODEL",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "FB_SYNC_PIPELINE_FAILURE_EMAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					},
+					{
+						"name": "Execute SP_LOAD_FACT_INVENTORY_PLANS",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "FACEBOOK_GET_FCST_DATA_FROM_ALGO_PLUS_APP_PRODUCTION_DB",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[dbo].[SP_LOAD_FACT_INVENTORY_PLANS]"
+						},
+						"linkedServiceName": {
+							"referenceName": "Aglo_Plus_FB_EDW_SqlServer_DEV",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "Truncate Table",
+						"type": "Script",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"linkedServiceName": {
+							"referenceName": "Aglo_Plus_FB_EDW_SqlServer_DEV",
+							"type": "LinkedServiceReference"
+						},
+						"typeProperties": {
+							"scripts": [
+								{
+									"type": "Query",
+									"text": "truncate table FB_Forecast_MASTER_APP;"
+								}
+							]
+						}
+					},
+					{
+						"name": "FB_SYNC_PIPELINE_FAILURE_EMAIL_2",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Execute SP_LOAD_FACT_INVENTORY_PLANS",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "FB_SYNC_PIPELINE_FAILURE_EMAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"ExecutionMode": {
+						"type": "string",
+						"defaultValue": "Full"
+					}
+				},
+				"folder": {
+					"name": "Facebook Pipelines"
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-11-21T10:17:22Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/MASTER_META_FORECAST_ENGINE_FEED_QA')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Execute META_FORECAST_ENGINE_FEED",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "META_FORECAST_ENGINE_FEED_QA",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					},
+					{
+						"name": "SP Engine ConsolidatedDataLoad",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "Execute META_FORECAST_ENGINE_FEED",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[engine].[ConsolidatedDataLoad]",
+							"storedProcedureParameters": {
+								"DeleteInactiveCombination": {
+									"value": "1",
+									"type": "Int16"
+								},
+								"FlushData": {
+									"value": "0",
+									"type": "Int16"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "sqlserver_dataplatform_general_dev",
+							"type": "LinkedServiceReference"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "Facebook Pipelines/Meta Algo Forecast Related"
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-11-24T10:58:14Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/MASTER_META_FORECAST_ENGINE_FEED_UAT')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Execute META_FORECAST_ENGINE_FEED",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "META_FORECAST_ENGINE_FEED_QA",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					},
+					{
+						"name": "FB_FORECAST_ENGINE_PIPELINE_SUCCESS_EMAIL",
+						"type": "WebActivity",
+						"dependsOn": [
+							{
+								"activity": "SP Engine ConsolidatedDataLoad",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"method": "POST",
+							"headers": {},
+							"url": "https://prod-81.eastus.logic.azure.com:443/workflows/3a52b8da1cb74de792ee0f9e3ca89d06/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=rsPHuDvp742N7C3vA0ICmS-a5vT8EW_sr-lkDPwOwdA",
+							"connectVia": {
+								"referenceName": "integration-runtime-facebook-dp-new",
+								"type": "IntegrationRuntimeReference"
+							},
+							"body": {
+								"Subject": "Pipeline [META_FORECAST_ENGINE_FEED] has been successfully completed",
+								"Message": "The pipeline run is successfully completed "
+							}
+						}
+					},
+					{
+						"name": "FB_FORECAST_ENGINE_PIPELINE_FAILURE_EMAIL",
+						"type": "WebActivity",
+						"dependsOn": [
+							{
+								"activity": "SP Engine ConsolidatedDataLoad",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"method": "POST",
+							"headers": {},
+							"url": "https://prod-81.eastus.logic.azure.com:443/workflows/3a52b8da1cb74de792ee0f9e3ca89d06/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=rsPHuDvp742N7C3vA0ICmS-a5vT8EW_sr-lkDPwOwdA",
+							"connectVia": {
+								"referenceName": "integration-runtime-facebook-dp-new",
+								"type": "IntegrationRuntimeReference"
+							},
+							"body": {
+								"Subject": "Pipeline [META_FORECAST_ENGINE_FEED] has been failed",
+								"Message": "The pipeline run is failed please visit ADF-FB-Algoplus-DEV"
+							}
+						}
+					},
+					{
+						"name": "SP Engine ConsolidatedDataLoad",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "Execute META_FORECAST_ENGINE_FEED",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[engine].[ConsolidatedDataLoad]",
+							"storedProcedureParameters": {
+								"DeleteInactiveCombination": {
+									"value": "1",
+									"type": "Int16"
+								},
+								"FlushData": {
+									"value": "0",
+									"type": "Int16"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "sqlserver_web_play_uat_database",
+							"type": "LinkedServiceReference"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "Facebook Pipelines/Meta Algo Forecast Related"
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-11-24T10:58:14Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/META_ALGO_PROCESS_CURATED_FORECAST')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "ALGO_BASELINE_FORECAST_FILE_UPLOAD",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "ALGO_BASELINE_FORECAST_FILE_UPLOAD",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					},
+					{
+						"name": "FACEBOOK_SEND_FCST_ENGINE_DATA_TO_ALGO_APP_QA_DB",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "ALGO_BASELINE_FORECAST_FILE_UPLOAD",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "FACEBOOK_SEND_FCST_ENGINE_DATA_TO_ALGO_APP_QA_DB",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					},
+					{
+						"name": "FACEBOOK_SEND_FCST_ENGINE_DATA_TO_ALGO_APP_PROD_DB",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "ALGO_BASELINE_FORECAST_FILE_UPLOAD",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "FACEBOOK_SEND_FCST_ENGINE_DATA_TO_ALGO_APP_PROD_DB",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "Facebook Pipelines/Meta Algo Forecast Related"
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-11-07T11:25:52Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Meta FC Narrative File Trigger')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "META_FC_NARRATIVE_FILE_UPLOAD",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "BlobEventsTrigger",
+				"typeProperties": {
+					"blobPathBeginsWith": "/fb-forecast-curation/blobs/algoplus-meta-fc-narrative/input/",
+					"blobPathEndsWith": ".csv",
+					"ignoreEmptyBlobs": false,
+					"scope": "[parameters('Meta FC Narrative File Trigger_properties_typeProperties_scope')]",
+					"events": [
+						"Microsoft.Storage.BlobCreated"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Meta Sell Out Feed File Trigger')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "META_SELL_OUT_FEED_FILE_UPLOAD",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "BlobEventsTrigger",
+				"typeProperties": {
+					"blobPathBeginsWith": "/meta-uploads/blobs/fb-sell-out-feed-incoming-file/input/",
+					"blobPathEndsWith": ".xlsx",
+					"ignoreEmptyBlobs": false,
+					"scope": "[parameters('Meta Sell Out Feed File Trigger_properties_typeProperties_scope')]",
+					"events": [
+						"Microsoft.Storage.BlobCreated"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Order_History')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "Delete_OrderHistory_file",
+							"type": "PipelineReference"
+						},
+						"parameters": {
+							"FileName": "[parameters('Order_History_properties_Delete_OrderHistory_file_parameters_FileName')]"
+						}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2023-05-30T22:04:00",
+						"timeZone": "Pakistan Standard Time",
+						"schedule": {
+							"minutes": [
+								27,
+								57
+							],
+							"hours": [
+								3,
+								4,
+								5,
+								6,
+								7,
+								8,
+								9,
+								10,
+								11,
+								12,
+								13
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/order_history_delete')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "Delete_OrderHistory_file",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "BlobEventsTrigger",
+				"typeProperties": {
+					"blobPathBeginsWith": "/fb-algoplus-dev/blobs/Input/",
+					"ignoreEmptyBlobs": true,
+					"scope": "[parameters('order_history_delete_properties_typeProperties_scope')]",
+					"events": [
+						"Microsoft.Storage.BlobCreated"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/FACEBOOK_MASTER_PIPELINE')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Get Folder Existance Check",
+						"type": "GetMetadata",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "DS_BLOB_Folder",
+								"type": "DatasetReference",
+								"parameters": {
+									"FolderPath": {
+										"value": "@concat('Input/',formatDateTime(utcnow(),'yyyy-MM-dd'))",
+										"type": "Expression"
+									}
+								}
+							},
+							"fieldList": [
+								"exists"
+							],
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "DelimitedTextReadSettings"
+							}
+						}
+					},
+					{
+						"name": "On Existance or Non-Existance Of Folder",
+						"type": "IfCondition",
+						"dependsOn": [
+							{
+								"activity": "Get Folder Existance Check",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@activity('Get Folder Existance Check').output.Exists",
+								"type": "Expression"
+							},
+							"ifFalseActivities": [
+								{
+									"name": "Folder Doesnot Exists",
+									"type": "Wait",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"waitTimeInSeconds": 1
+									}
+								},
+								{
+									"name": "FB_MASTER_PIPELINE_FAILURE_EMAIL",
+									"type": "ExecutePipeline",
+									"dependsOn": [
+										{
+											"activity": "Folder Doesnot Exists",
+											"dependencyConditions": [
+												"Failed"
+											]
+										}
+									],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "FB_MASTER_PIPELINE_FAILURE_EMAIL",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {}
+									}
+								}
+							],
+							"ifTrueActivities": [
+								{
+									"name": "Execute Pipeline For Fetching Files",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "FACEBOOK_DATA_EXTRACTION",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {}
+									}
+								},
+								{
+									"name": "FACEBOOK_PROCESS_TABULAR_MODEL",
+									"type": "ExecutePipeline",
+									"dependsOn": [
+										{
+											"activity": "FACEBOOK_GET_DATA_FROM_ALGO_PLUS_APP_PRODUCTION_DB",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "FACEBOOK_PROCESS_TABULAR_MODEL",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {}
+									}
+								},
+								{
+									"name": "FACEBOOK_SEND_DATA_TO_ALGO_APP_PRODUCTION_DB",
+									"type": "ExecutePipeline",
+									"dependsOn": [
+										{
+											"activity": "FACEBOOK_GET_DATA_FROM_ALGO_PLUS_APP_PRODUCTION_DB",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "FACEBOOK_SEND_DATA_TO_ALGO_APP_PRODUCTION_DB",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {}
+									}
+								},
+								{
+									"name": "FACEBOOK_SEND_DATA_TO_ALGO_APP",
+									"type": "ExecutePipeline",
+									"dependsOn": [
+										{
+											"activity": "FACEBOOK_GET_DATA_FROM_ALGO_PLUS_APP_PRODUCTION_DB",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "FACEBOOK_SEND_DATA_TO_ALGO_QA_APP",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {}
+									}
+								},
+								{
+									"name": "FACEBOOK_GET_DATA_FROM_ALGO_PLUS_APP_PRODUCTION_DB",
+									"type": "ExecutePipeline",
+									"dependsOn": [
+										{
+											"activity": "Execute Pipeline For Fetching Files",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "FACEBOOK_GET_DATA_FROM_ALGO_PLUS_APP_PRODUCTION_DB",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {}
+									}
+								},
+								{
+									"name": "FB_MASTER_PIPELINE_FAILURE_EMAIL_1",
+									"type": "ExecutePipeline",
+									"dependsOn": [
+										{
+											"activity": "Execute Pipeline For Fetching Files",
+											"dependencyConditions": [
+												"Failed"
+											]
+										}
+									],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "FB_MASTER_PIPELINE_FAILURE_EMAIL",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {}
+									}
+								},
+								{
+									"name": "FB_MASTER_PIPELINE_FAILURE_EMAIL_2",
+									"type": "ExecutePipeline",
+									"dependsOn": [
+										{
+											"activity": "FACEBOOK_GET_DATA_FROM_ALGO_PLUS_APP_PRODUCTION_DB",
+											"dependencyConditions": [
+												"Failed"
+											]
+										}
+									],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "FB_MASTER_PIPELINE_FAILURE_EMAIL",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {}
+									}
+								},
+								{
+									"name": "FB_MASTER_PIPELINE_FAILURE_EMAIL_3",
+									"type": "ExecutePipeline",
+									"dependsOn": [
+										{
+											"activity": "FACEBOOK_PROCESS_TABULAR_MODEL",
+											"dependencyConditions": [
+												"Failed"
+											]
+										}
+									],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "FB_MASTER_PIPELINE_FAILURE_EMAIL",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {}
+									}
+								},
+								{
+									"name": "FB_MASTER_PIPELINE_FAILURE_EMAIL_5",
+									"type": "ExecutePipeline",
+									"dependsOn": [
+										{
+											"activity": "FACEBOOK_SEND_DATA_TO_ALGO_APP_PRODUCTION_DB",
+											"dependencyConditions": [
+												"Failed"
+											]
+										}
+									],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "FB_MASTER_PIPELINE_FAILURE_EMAIL",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {}
+									}
+								},
+								{
+									"name": "FB_MASTER_PIPELINE_SUCCESS_EMAIL",
+									"type": "ExecutePipeline",
+									"dependsOn": [
+										{
+											"activity": "FACEBOOK_PROCESS_TABULAR_MODEL",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "FB_MASTER_PIPELINE_SUCCESS_EMAIL",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {}
+									}
+								},
+								{
+									"name": "FB_MASTER_PIPELINE_FAILURE_EMAIL_3_copy1",
+									"type": "ExecutePipeline",
+									"dependsOn": [
+										{
+											"activity": "FACEBOOK_SEND_DATA_TO_ALGO_APP",
+											"dependencyConditions": [
+												"Failed"
+											]
+										}
+									],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "FB_MASTER_PIPELINE_FAILURE_EMAIL",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {}
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "FB_MASTER_PIPELINE_FAILURE_EMAIL_6",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Get Folder Existance Check",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "FB_MASTER_PIPELINE_FAILURE_EMAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					},
+					{
+						"name": "FB_MASTER_PIPELINE_FAILURE_EMAIL_6_copy1",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "On Existance or Non-Existance Of Folder",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "FB_MASTER_PIPELINE_FAILURE_EMAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "Facebook Pipelines"
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-11-07T11:20:34Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/FACEBOOK_DATA_EXTRACTION')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Meta Forecast Engine Feed Trigger QA')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "MASTER_META_FORECAST_ENGINE_FEED_QA",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Week",
+						"interval": 1,
+						"startTime": "2022-10-26T10:33:00Z",
+						"timeZone": "UTC",
+						"schedule": {
+							"minutes": [
+								15
+							],
+							"hours": [
+								6
+							],
+							"weekDays": [
+								"Sunday",
+								"Wednesday"
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/MASTER_META_FORECAST_ENGINE_FEED_QA')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Meta Forecast Engine Feed Trigger UAT')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "MASTER_META_FORECAST_ENGINE_FEED_UAT",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Week",
+						"interval": 1,
+						"startTime": "2022-10-26T10:33:00Z",
+						"timeZone": "UTC",
+						"schedule": {
+							"minutes": [
+								0
+							],
+							"hours": [
+								6
+							],
+							"weekDays": [
+								"Sunday",
+								"Wednesday"
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/MASTER_META_FORECAST_ENGINE_FEED_UAT')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SyncForecastDataFullTrigger')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "FACEBOOK_SYNC_DATA_FULL_MODE",
+							"type": "PipelineReference"
+						},
+						"parameters": {
+							"ExecutionMode": "[parameters('SyncForecastDataFullTrigger_properties_FACEBOOK_SYNC_DATA_FULL_MODE_parameters_ExecutionMode')]"
+						}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Week",
+						"interval": 1,
+						"startTime": "2021-09-24T14:40:00Z",
+						"timeZone": "UTC",
+						"schedule": {
+							"hours": [
+								3
+							],
+							"weekDays": [
+								"Sunday"
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/FACEBOOK_SYNC_DATA_FULL_MODE')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SyncForecastDataTrigger')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "FACEBOOK_SYNC_DATA",
+							"type": "PipelineReference"
+						},
+						"parameters": {
+							"ExecutionMode": "[parameters('SyncForecastDataTrigger_properties_FACEBOOK_SYNC_DATA_parameters_ExecutionMode')]"
+						}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2021-09-24T14:40:00Z",
+						"timeZone": "UTC",
+						"schedule": {
+							"hours": [
+								0,
+								2,
+								6,
+								8,
+								10,
+								14,
+								16,
+								18,
+								20,
+								22,
+								11,
+								13,
+								17,
+								21
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/FACEBOOK_SYNC_DATA')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Scheduled_Trigger')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "FACEBOOK_MASTER_PIPELINE",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Minute",
+						"interval": 30,
+						"startTime": "2022-09-29T09:30:00",
+						"timeZone": "Pakistan Standard Time"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/FACEBOOK_MASTER_PIPELINE')]"
+			]
+		}
+	]
+}

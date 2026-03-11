@@ -203,6 +203,9 @@
 				"type": "String"
 			}
 		},
+		"folder": {
+			"name": "poc fcst zaheer"
+		},
 		"annotations": []
 	}
 }

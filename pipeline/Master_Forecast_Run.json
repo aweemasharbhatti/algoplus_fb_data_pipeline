@@ -164,7 +164,7 @@
 									"type": "DatasetReference",
 									"parameters": {
 										"folder": {
-											"value": "@concat(activity('GetForecastConfigs').output.value[0].Output_Path,'/',activity('GetForecastConfigs').output.value[0].Forecast_Key)",
+											"value": "@concat(activity('GetForecastConfigs').output.value[0].Output_Path,'/',activity('Generate Forecast ItemAccount and Key').output.firstRow.ForecastKey)",
 											"type": "Expression"
 										},
 										"file": {

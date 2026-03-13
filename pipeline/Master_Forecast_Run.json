@@ -67,7 +67,7 @@
 				"type": "IfCondition",
 				"dependsOn": [
 					{
-						"activity": "Generate Forecast ItemAccount and Key",
+						"activity": "Generate Forecast ItemAccount and Key 2",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -183,8 +183,8 @@
 				}
 			},
 			{
-				"name": "Generate Forecast ItemAccount and Key",
-				"type": "SqlServerStoredProcedure",
+				"name": "Generate Forecast ItemAccount and Key 2",
+				"type": "Lookup",
 				"dependsOn": [
 					{
 						"activity": "Set ForecastConfigs",
@@ -202,27 +202,22 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"storedProcedureName": "[engine].[CalculateForecastItemCombinations_Zaheer]"
-				},
-				"linkedServiceName": {
-					"referenceName": "AzureSQLparameterizedLink",
-					"type": "LinkedServiceReference",
-					"parameters": {
-						"server": {
-							"value": "@activity('GetForecastConfigs').output.value[0].ServerName",
-							"type": "Expression"
-						},
-						"DB": {
-							"value": "@activity('GetForecastConfigs').output.value[0].DB",
-							"type": "Expression"
-						},
-						"user": {
-							"value": "@activity('GetForecastConfigs').output.value[0].UserName",
-							"type": "Expression"
-						},
-						"password": {
-							"value": "@activity('GetForecastConfigs').output.value[0].Password",
-							"type": "Expression"
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[engine].[CalculateForecastItemCombinations_Zaheer]",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "AzureSQLDynamic",
+						"type": "DatasetReference",
+						"parameters": {
+							"server": "@activity('GetForecastConfigs').output.value[0].ServerName",
+							"schema": "dbo",
+							"table": "temp",
+							"DB": "@activity('GetForecastConfigs').output.value[0].DB",
+							"User": "@activity('GetForecastConfigs').output.value[0].UserName",
+							"Password": "@activity('GetForecastConfigs').output.value[0].Password"
 						}
 					}
 				}

@@ -67,7 +67,7 @@
 				"type": "IfCondition",
 				"dependsOn": [
 					{
-						"activity": "Generate Forecast ItemAccount and Key 2",
+						"activity": "Generate Forecast ItemAccount and Key",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -100,7 +100,7 @@
 										"PforecastKey": {
 											"type": "String",
 											"value": {
-												"value": "@activity('GetForecastConfigs').output.value[0].Forecast_Key",
+												"value": "@activity('Generate Forecast ItemAccount and Key').output.firstRow.ForecastKey",
 												"type": "Expression"
 											}
 										}
@@ -183,7 +183,7 @@
 				}
 			},
 			{
-				"name": "Generate Forecast ItemAccount and Key 2",
+				"name": "Generate Forecast ItemAccount and Key",
 				"type": "Lookup",
 				"dependsOn": [
 					{

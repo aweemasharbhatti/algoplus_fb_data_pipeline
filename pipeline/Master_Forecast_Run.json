@@ -19,6 +19,7 @@
 				"typeProperties": {
 					"source": {
 						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[engine].[GetActiveForecastPipelineConfig]",
 						"queryTimeout": "02:00:00",
 						"partitionOption": "None"
 					},

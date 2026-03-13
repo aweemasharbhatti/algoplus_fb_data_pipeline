@@ -67,7 +67,7 @@
 				"type": "IfCondition",
 				"dependsOn": [
 					{
-						"activity": "Generate fsct ItemAccount Combinations",
+						"activity": "Generate Forecast ItemAccount and Key",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -183,7 +183,7 @@
 				}
 			},
 			{
-				"name": "Generate fsct ItemAccount Combinations",
+				"name": "Generate Forecast ItemAccount and Key",
 				"type": "SqlServerStoredProcedure",
 				"dependsOn": [
 					{
@@ -202,58 +202,7 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"storedProcedureName": "[engine].[ForecastManagerInsert_ZA_11Mar26]",
-					"storedProcedureParameters": {
-						"PlookbackFromWeek": {
-							"value": {
-								"value": "@activity('GetForecastConfigs').output.value[0].Lookback_Window",
-								"type": "Expression"
-							},
-							"type": "Int32"
-						},
-						"PlookbackToWeek": {
-							"value": {
-								"value": "@activity('GetForecastConfigs').output.value[0].ToWeek",
-								"type": "Expression"
-							},
-							"type": "Datetime"
-						},
-						"PforecastFromWeek": {
-							"value": {
-								"value": "@activity('GetForecastConfigs').output.value[0].FromWeek",
-								"type": "Expression"
-							},
-							"type": "Datetime"
-						},
-						"PforecastWeekPeriodId": {
-							"value": {
-								"value": "@activity('GetForecastConfigs').output.value[0].PeriodId",
-								"type": "Expression"
-							},
-							"type": "String"
-						},
-						"Padjustment": {
-							"value": "0.0",
-							"type": "Decimal"
-						},
-						"PForecastMethod": {
-							"value": {
-								"value": "@activity('GetForecastConfigs').output.value[0].Forecast_Type",
-								"type": "Expression"
-							},
-							"type": "String"
-						},
-						"PCurrentUserId": {
-							"value": "1",
-							"type": "Int32"
-						},
-						"PForecastProductHierarchyType": {
-							"value": null
-						},
-						"PLookBackWeekWeightTypes": {
-							"value": null
-						}
-					}
+					"storedProcedureName": "[engine].[CalculateForecastItemCombinations_Zaheer]"
 				},
 				"linkedServiceName": {
 					"referenceName": "AzureSQLparameterizedLink",

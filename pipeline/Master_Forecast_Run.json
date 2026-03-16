@@ -183,7 +183,7 @@
 				}
 			},
 			{
-				"name": "Generate Forecast Key",
+				"name": "Generate Forecast ItemAccount and Key",
 				"type": "Lookup",
 				"dependsOn": [
 					{
@@ -227,7 +227,7 @@
 				"type": "IfCondition",
 				"dependsOn": [
 					{
-						"activity": "Generate Forecast Key",
+						"activity": "Generate Forecast ItemAccount and Key",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -236,7 +236,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"expression": {
-						"value": "@not(equals(activity('Generate Forecast Key').output.firstRow.ForecastKey, -1))",
+						"value": "@not(equals(activity('Generate Forecast ItemAccount and Key').output.firstRow.ForecastKey, -1))",
 						"type": "Expression"
 					}
 				}

@@ -67,7 +67,7 @@
 				"type": "IfCondition",
 				"dependsOn": [
 					{
-						"activity": "Generate Forecast ItemAccount and Key",
+						"activity": "Check Generate Forecast Status",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -164,7 +164,7 @@
 									"type": "DatasetReference",
 									"parameters": {
 										"folder": {
-											"value": "@concat(activity('GetForecastConfigs').output.value[0].Output_Path,'/',activity('Generate Forecast ItemAccount and Key').output.firstRow.ForecastKey)",
+											"value": "@concat(activity('GetForecastConfigs').output.value[0].Output_Path,'/',activity('Generate Forecast Key').output.firstRow.ForecastKey)",
 											"type": "Expression"
 										},
 										"file": {
@@ -183,7 +183,7 @@
 				}
 			},
 			{
-				"name": "Generate Forecast ItemAccount and Key",
+				"name": "Generate Forecast Key",
 				"type": "Lookup",
 				"dependsOn": [
 					{
@@ -219,6 +219,25 @@
 							"User": "@activity('GetForecastConfigs').output.value[0].UserName",
 							"Password": "@activity('GetForecastConfigs').output.value[0].Password"
 						}
+					}
+				}
+			},
+			{
+				"name": "Check Generate Forecast Status",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "Generate Forecast Key",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@not(equals(activity('Generate Forecast Key').output.firstRow.ForecastKey, -1))",
+						"type": "Expression"
 					}
 				}
 			}

@@ -9,7 +9,7 @@
 				"type": "Lookup",
 				"dependsOn": [
 					{
-						"activity": "AzurePipelineTriggerLogs",
+						"activity": "Start Pipeline Logs",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -72,14 +72,9 @@
 			{
 				"name": "check forecast run is enable",
 				"type": "IfCondition",
-				"dependsOn": [
-					{
-						"activity": "Check Generate Forecast Status",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
 				"userProperties": [],
 				"typeProperties": {
 					"expression": {
@@ -232,14 +227,9 @@
 			{
 				"name": "Check Generate Forecast Status",
 				"type": "IfCondition",
-				"dependsOn": [
-					{
-						"activity": "Generate Forecast ItemAccount and Key",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
 				"userProperties": [],
 				"typeProperties": {
 					"expression": {
@@ -249,7 +239,7 @@
 				}
 			},
 			{
-				"name": "AzurePipelineTriggerLogs",
+				"name": "Start Pipeline Logs",
 				"type": "SqlServerStoredProcedure",
 				"dependsOn": [],
 				"policy": {
@@ -305,7 +295,7 @@
 							"type": "Datetime"
 						},
 						"PDurationInMs": {
-							"value": "1",
+							"value": null,
 							"type": "Int32"
 						},
 						"PStatus": {
@@ -314,6 +304,106 @@
 						},
 						"PMessage": {
 							"value": "Master Forecast Pipeline Running",
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureSQLparameterizedLink",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"server": "sqlserver-dataplatform-general-dev.database.windows.net",
+						"DB": "dwh-meta-dev",
+						"user": "sqladmin",
+						"password": "sCSmjvUoFIhEh2S"
+					}
+				}
+			},
+			{
+				"name": "Add Logs 11111",
+				"type": "Script",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "AzureSQLparameterizedLink",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"server": "sqlserver-dataplatform-general-dev.database.windows.net",
+						"DB": "dwh-meta-dev",
+						"user": "sqladmin",
+						"password": "sCSmjvUoFIhEh2S"
+					}
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "NonQuery",
+							"text": {
+								"value": "INSERT INTO [engine].[AzurePipelineActivityLogs]\n(\n    RunId,\n    ActivityName,\n    LastUpdated,\n    Status,\n    ActivityStart,\n    ActivityEnd,\n    Message\n)\nVALUES\n(\n    '@{pipeline().RunId}',\n    'Start Pipeline Logs',\n    \"@{utcNow()}\",\n    'Error',\n    \"@{utcNow()}\",\n    \"@{utcNow()}\",\n    'Start Pipeline Logs Error'\n);",
+								"type": "Expression"
+							}
+						}
+					],
+					"scriptBlockExecutionTimeout": "02:00:00"
+				}
+			},
+			{
+				"name": "Add Logs 1",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "Start Pipeline Logs",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[engine].[AzurePipelineActivityLogsInsertUpdate_ZA]",
+					"storedProcedureParameters": {
+						"RunId": {
+							"value": "@{pipeline().RunId}",
+							"type": "String"
+						},
+						"ActivityName": {
+							"value": "Start Pipeline Logs",
+							"type": "String"
+						},
+						"LastUpdated": {
+							"value": "@{utcNow()}",
+							"type": "Datetime"
+						},
+						"Status": {
+							"value": "Error",
+							"type": "String"
+						},
+						"ActivityStart": {
+							"value": "@{utcNow()}",
+							"type": "Datetime"
+						},
+						"ActivityEnd": {
+							"value": "@{utcNow()}",
+							"type": "Datetime"
+						},
+						"Message": {
+							"value": "Start Pipeline Logs Error",
 							"type": "String"
 						}
 					}

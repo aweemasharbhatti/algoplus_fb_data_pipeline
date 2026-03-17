@@ -643,7 +643,7 @@
 							"type": "Datetime"
 						},
 						"Status": {
-							"value": "In Progress",
+							"value": "Completed",
 							"type": "String"
 						},
 						"ActivityStart": {
@@ -782,6 +782,132 @@
 						},
 						"Message": {
 							"value": "End Generate Forecast Items & Key",
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureSQLparameterizedLink",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"server": "sqlserver-dataplatform-general-dev.database.windows.net",
+						"DB": "dwh-meta-dev",
+						"user": "sqladmin",
+						"password": "sCSmjvUoFIhEh2S"
+					}
+				}
+			},
+			{
+				"name": "Add Logs 8",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "GetForecastConfigs",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[engine].[AzurePipelineActivityLogsInsertUpdate_ZA]",
+					"storedProcedureParameters": {
+						"RunId": {
+							"value": "@{pipeline().RunId}",
+							"type": "String"
+						},
+						"ActivityName": {
+							"value": "Load Forecast Configurations",
+							"type": "String"
+						},
+						"LastUpdated": {
+							"value": "@{utcNow()}",
+							"type": "Datetime"
+						},
+						"Status": {
+							"value": "Failed",
+							"type": "String"
+						},
+						"ActivityStart": {
+							"value": "@{utcNow()}",
+							"type": "Datetime"
+						},
+						"ActivityEnd": {
+							"value": "@{utcNow()}",
+							"type": "Datetime"
+						},
+						"Message": {
+							"value": "Error in Load Forecast Configurations",
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureSQLparameterizedLink",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"server": "sqlserver-dataplatform-general-dev.database.windows.net",
+						"DB": "dwh-meta-dev",
+						"user": "sqladmin",
+						"password": "sCSmjvUoFIhEh2S"
+					}
+				}
+			},
+			{
+				"name": "Add Logs 9",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "Generate Forecast ItemAccount and Key",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[engine].[AzurePipelineActivityLogsInsertUpdate_ZA]",
+					"storedProcedureParameters": {
+						"RunId": {
+							"value": "@{pipeline().RunId}",
+							"type": "String"
+						},
+						"ActivityName": {
+							"value": "Generate Forecast Items & Key",
+							"type": "String"
+						},
+						"LastUpdated": {
+							"value": "@{utcNow()}",
+							"type": "Datetime"
+						},
+						"Status": {
+							"value": "Failed",
+							"type": "String"
+						},
+						"ActivityStart": {
+							"value": "@{utcNow()}",
+							"type": "Datetime"
+						},
+						"ActivityEnd": {
+							"value": "@{utcNow()}",
+							"type": "Datetime"
+						},
+						"Message": {
+							"value": "Error in Generate Forecast Items & Key",
 							"type": "String"
 						}
 					}

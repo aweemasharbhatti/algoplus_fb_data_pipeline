@@ -263,56 +263,56 @@
 				"typeProperties": {
 					"storedProcedureName": "[engine].[AzurePipelineTriggerInsertUpdate]",
 					"storedProcedureParameters": {
-						"@PPipeLineTriggerId": {
+						"PPipeLineTriggerId": {
 							"value": "0",
 							"type": "Int32"
 						},
-						"@PRunId": {
+						"PRunId": {
 							"value": {
 								"value": "@{pipeline().RunId}",
 								"type": "Expression"
 							},
 							"type": "String"
 						},
-						"@PRunGroupId": {
+						"PRunGroupId": {
 							"value": {
 								"value": "@{pipeline().RunId}",
 								"type": "Expression"
 							},
 							"type": "String"
 						},
-						"@PIsLatest": {
-							"value": "1",
+						"PIsLatest": {
+							"value": "true",
 							"type": "Boolean"
 						},
-						"@PPipelineName": {
+						"PPipelineName": {
 							"value": "Master Forecast Pipeline",
 							"type": "String"
 						},
-						"@PLastUpdated": {
+						"PLastUpdated": {
 							"value": {
 								"value": "@utcNow()",
 								"type": "Expression"
 							},
 							"type": "Datetime"
 						},
-						"@PRunStart": {
+						"PRunStart": {
 							"value": "@utcNow()",
 							"type": "Datetime"
 						},
-						"@PRunEnd": {
+						"PRunEnd": {
 							"value": null,
 							"type": "Datetime"
 						},
-						"@PDurationInMs": {
+						"PDurationInMs": {
 							"value": "1",
 							"type": "Int32"
 						},
-						"@PStatus": {
+						"PStatus": {
 							"value": "In Progress",
 							"type": "String"
 						},
-						"@PMessage": {
+						"PMessage": {
 							"value": "Master Forecast Pipeline Running",
 							"type": "String"
 						}

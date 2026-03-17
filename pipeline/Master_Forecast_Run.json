@@ -7,7 +7,14 @@
 				"name": "GetForecastConfigs",
 				"description": "read configs from DB table",
 				"type": "Lookup",
-				"dependsOn": [],
+				"dependsOn": [
+					{
+						"activity": "AzurePipelineTriggerLogs",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -238,6 +245,87 @@
 					"expression": {
 						"value": "@and(\n    not(empty(activity('Generate Forecast ItemAccount and Key').output.firstRow.ForecastKey)),\n    not(equals(activity('Generate Forecast ItemAccount and Key').output.firstRow.ForecastKey, '-1'))\n)",
 						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "AzurePipelineTriggerLogs",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[engine].[AzurePipelineTriggerInsertUpdate]",
+					"storedProcedureParameters": {
+						"@PPipeLineTriggerId": {
+							"value": "0",
+							"type": "Int32"
+						},
+						"@PRunId": {
+							"value": {
+								"value": "@{pipeline().RunId}",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"@PRunGroupId": {
+							"value": {
+								"value": "@{pipeline().RunId}",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"@PIsLatest": {
+							"value": "1",
+							"type": "Boolean"
+						},
+						"@PPipelineName": {
+							"value": "Master Forecast Pipeline",
+							"type": "String"
+						},
+						"@PLastUpdated": {
+							"value": {
+								"value": "@utcNow()",
+								"type": "Expression"
+							},
+							"type": "Datetime"
+						},
+						"@PRunStart": {
+							"value": "@utcNow()",
+							"type": "Datetime"
+						},
+						"@PRunEnd": {
+							"value": null,
+							"type": "Datetime"
+						},
+						"@PDurationInMs": {
+							"value": "1",
+							"type": "Int32"
+						},
+						"@PStatus": {
+							"value": "In Progress",
+							"type": "String"
+						},
+						"@PMessage": {
+							"value": "Master Forecast Pipeline Running",
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureSQLparameterizedLink",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"server": "sqlserver-dataplatform-general-dev.database.windows.net",
+						"DB": "dwh-meta-dev",
+						"user": "sqladmin",
+						"password": "sCSmjvUoFIhEh2S"
 					}
 				}
 			}

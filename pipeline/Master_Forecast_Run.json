@@ -236,7 +236,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"expression": {
-						"value": "@not(equals(activity('Generate Forecast ItemAccount and Key').output.firstRow.ForecastKey, -1))",
+						"value": "@and(\n    not(empty(activity('Generate Forecast ItemAccount and Key').output.firstRow.ForecastKey)),\n    not(equals(activity('Generate Forecast ItemAccount and Key').output.firstRow.ForecastKey, '-1'))\n)",
 						"type": "Expression"
 					}
 				}

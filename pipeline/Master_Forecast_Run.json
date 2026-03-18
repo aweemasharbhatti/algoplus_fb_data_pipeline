@@ -1664,7 +1664,7 @@
 							"type": "Expression"
 						},
 						"lookback_window": {
-							"value": "@activity('GetForecastConfigs').output.value[0].Lookback_Window",
+							"value": "@string(activity('GetForecastConfigs').output.value[0].Lookback_Window)",
 							"type": "Expression"
 						},
 						"forecast_type": {

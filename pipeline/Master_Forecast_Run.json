@@ -239,7 +239,7 @@
 				}
 			},
 			{
-				"name": "Start Pipeline Logs",
+				"name": "Pipeline Starts",
 				"type": "SqlServerStoredProcedure",
 				"dependsOn": [],
 				"policy": {
@@ -361,7 +361,7 @@
 				"type": "SqlServerStoredProcedure",
 				"dependsOn": [
 					{
-						"activity": "Start Pipeline Logs",
+						"activity": "Pipeline Starts",
 						"dependencyConditions": [
 							"Failed"
 						]
@@ -971,7 +971,7 @@
 				"type": "Lookup",
 				"dependsOn": [
 					{
-						"activity": "Start Pipeline Logs",
+						"activity": "Pipeline Starts",
 						"dependencyConditions": [
 							"Succeeded"
 						]

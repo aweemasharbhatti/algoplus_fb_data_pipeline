@@ -37,7 +37,7 @@
 							"server": "sqlserver-dataplatform-general-dev.database.windows.net",
 							"schema": "engine",
 							"table": "ForecastPipelineConfig",
-							"DB": "dwh-meta-dev2",
+							"DB": "dwh-meta-dev",
 							"User": "sqladmin",
 							"Password": "sCSmjvUoFIhEh2S"
 						}

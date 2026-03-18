@@ -1644,7 +1644,7 @@
 					"waitOnCompletion": true,
 					"parameters": {
 						"forecast_future_weeks": {
-							"value": "@activity('GetForecastConfigs').output.value[0].Forecast_Future_Weeks",
+							"value": "@string(activity('GetForecastConfigs').output.value[0].forecast_future_weeks)",
 							"type": "Expression"
 						},
 						"delimiterInput": {

@@ -769,7 +769,7 @@
 							"type": "Datetime"
 						},
 						"Status": {
-							"value": "In Progress",
+							"value": "Completed",
 							"type": "String"
 						},
 						"ActivityStart": {

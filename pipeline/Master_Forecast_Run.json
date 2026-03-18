@@ -1100,7 +1100,8 @@
 								"value": "Completed"
 							},
 							"ActivityStart": {
-								"type": "Datetime"
+								"type": "Datetime",
+								"value": null
 							},
 							"ActivityEnd": {
 								"type": "Datetime",
@@ -1346,7 +1347,7 @@
 							},
 							"ActivityStart": {
 								"type": "Datetime",
-								"value": ""
+								"value": null
 							},
 							"ActivityEnd": {
 								"type": "Datetime",
@@ -1592,7 +1593,7 @@
 							},
 							"ActivityStart": {
 								"type": "Datetime",
-								"value": ""
+								"value": null
 							},
 							"ActivityEnd": {
 								"type": "Datetime",

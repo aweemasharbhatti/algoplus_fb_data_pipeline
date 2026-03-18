@@ -357,7 +357,7 @@
 				}
 			},
 			{
-				"name": "Add Logs 1",
+				"name": "InsertLog 1",
 				"type": "SqlServerStoredProcedure",
 				"dependsOn": [
 					{
@@ -1100,8 +1100,7 @@
 								"value": "Completed"
 							},
 							"ActivityStart": {
-								"type": "Datetime",
-								"value": null
+								"type": "Datetime"
 							},
 							"ActivityEnd": {
 								"type": "Datetime",
@@ -1347,7 +1346,7 @@
 							},
 							"ActivityStart": {
 								"type": "Datetime",
-								"value": null
+								"value": ""
 							},
 							"ActivityEnd": {
 								"type": "Datetime",
@@ -1593,7 +1592,7 @@
 							},
 							"ActivityStart": {
 								"type": "Datetime",
-								"value": null
+								"value": ""
 							},
 							"ActivityEnd": {
 								"type": "Datetime",

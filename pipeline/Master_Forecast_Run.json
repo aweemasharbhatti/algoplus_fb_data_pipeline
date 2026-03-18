@@ -9,7 +9,7 @@
 				"type": "Lookup",
 				"dependsOn": [
 					{
-						"activity": "Add Logs 2",
+						"activity": "InsertLog 2",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -50,7 +50,7 @@
 				"type": "SetVariable",
 				"dependsOn": [
 					{
-						"activity": "Add Logs 4",
+						"activity": "InsertLog 5",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -189,7 +189,7 @@
 				"type": "Lookup",
 				"dependsOn": [
 					{
-						"activity": "Add Logs 6",
+						"activity": "InsertLog 8",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -420,79 +420,11 @@
 				}
 			},
 			{
-				"name": "Add Logs 2",
-				"type": "SqlServerStoredProcedure",
-				"dependsOn": [
-					{
-						"activity": "Start Pipeline Logs",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"storedProcedureName": "[engine].[AzurePipelineActivityLogsInsertUpdate_ZA]",
-					"storedProcedureParameters": {
-						"RunId": {
-							"value": "@{pipeline().RunId}",
-							"type": "String"
-						},
-						"ActivityName": {
-							"value": "Load Forecast Configurations",
-							"type": "String"
-						},
-						"LastUpdated": {
-							"value": "@{utcNow()}",
-							"type": "Datetime"
-						},
-						"Status": {
-							"value": "In Progress",
-							"type": "String"
-						},
-						"ActivityStart": {
-							"value": "@{utcNow()}",
-							"type": "Datetime"
-						},
-						"ActivityEnd": {
-							"value": "@{utcNow()}",
-							"type": "Datetime"
-						},
-						"Message": {
-							"value": "Start Load Forecast Configurations",
-							"type": "String"
-						}
-					}
-				},
-				"linkedServiceName": {
-					"referenceName": "AzureSQLparameterizedLink",
-					"type": "LinkedServiceReference",
-					"parameters": {
-						"server": "sqlserver-dataplatform-general-dev.database.windows.net",
-						"DB": "dwh-meta-dev",
-						"user": "sqladmin",
-						"password": "sCSmjvUoFIhEh2S"
-					}
-				}
-			},
-			{
 				"name": "Add Logs 3",
 				"type": "SqlServerStoredProcedure",
-				"dependsOn": [
-					{
-						"activity": "GetForecastConfigs",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -548,14 +480,9 @@
 			{
 				"name": "Add Logs 4",
 				"type": "SqlServerStoredProcedure",
-				"dependsOn": [
-					{
-						"activity": "Add Logs 3",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -611,14 +538,9 @@
 			{
 				"name": "Add Logs 5",
 				"type": "SqlServerStoredProcedure",
-				"dependsOn": [
-					{
-						"activity": "Set ForecastConfigs",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -674,14 +596,9 @@
 			{
 				"name": "Add Logs 6",
 				"type": "SqlServerStoredProcedure",
-				"dependsOn": [
-					{
-						"activity": "Add Logs 5",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -800,14 +717,9 @@
 			{
 				"name": "Add Logs 8",
 				"type": "SqlServerStoredProcedure",
-				"dependsOn": [
-					{
-						"activity": "GetForecastConfigs",
-						"dependencyConditions": [
-							"Failed"
-						]
-					}
-				],
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -926,14 +838,9 @@
 			{
 				"name": "Add Logs 10",
 				"type": "SqlServerStoredProcedure",
-				"dependsOn": [
-					{
-						"activity": "Set ForecastConfigs",
-						"dependencyConditions": [
-							"Failed"
-						]
-					}
-				],
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -1066,6 +973,654 @@
 						"DB": "dwh-meta-dev",
 						"user": "sqladmin",
 						"password": "sCSmjvUoFIhEh2S"
+					}
+				}
+			},
+			{
+				"name": "InsertLog 2",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "Start Pipeline Logs",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[engine].[AzurePipelineActivityLogsInsertUpdate_ZA]",
+						"storedProcedureParameters": {
+							"PipelineActivityLogId": {
+								"type": "Int32",
+								"value": "0"
+							},
+							"RunId": {
+								"type": "String",
+								"value": {
+									"value": "@{pipeline().RunId}",
+									"type": "Expression"
+								}
+							},
+							"ActivityName": {
+								"type": "String",
+								"value": "Load Forecast Configurations"
+							},
+							"LastUpdated": {
+								"type": "Datetime",
+								"value": {
+									"value": "@{utcNow()}",
+									"type": "Expression"
+								}
+							},
+							"Status": {
+								"type": "String",
+								"value": "In Progress"
+							},
+							"ActivityStart": {
+								"type": "Datetime",
+								"value": "@{utcNow()}"
+							},
+							"ActivityEnd": {
+								"type": "Datetime",
+								"value": null
+							},
+							"Message": {
+								"type": "String",
+								"value": "Start Load Forecast Configurations"
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "AzureSQLDynamic",
+						"type": "DatasetReference",
+						"parameters": {
+							"server": "sqlserver-dataplatform-general-dev.database.windows.net",
+							"schema": "dbo",
+							"table": "temp",
+							"DB": "dwh-meta-dev",
+							"User": "sqladmin",
+							"Password": "sCSmjvUoFIhEh2S"
+						}
+					}
+				}
+			},
+			{
+				"name": "InsertLog 3",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "GetForecastConfigs",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[engine].[AzurePipelineActivityLogsInsertUpdate_ZA]",
+						"storedProcedureParameters": {
+							"PipelineActivityLogId": {
+								"type": "Int32",
+								"value": {
+									"value": "@activity('InsertLog 2').output.firstRow.PipelineActivityLogId",
+									"type": "Expression"
+								}
+							},
+							"RunId": {
+								"type": "String",
+								"value": {
+									"value": "@{pipeline().RunId}",
+									"type": "Expression"
+								}
+							},
+							"ActivityName": {
+								"type": "String",
+								"value": "Load Forecast Configurations"
+							},
+							"LastUpdated": {
+								"type": "Datetime",
+								"value": {
+									"value": "@{utcNow()}",
+									"type": "Expression"
+								}
+							},
+							"Status": {
+								"type": "String",
+								"value": "Completed"
+							},
+							"ActivityStart": {
+								"type": "Datetime",
+								"value": null
+							},
+							"ActivityEnd": {
+								"type": "Datetime",
+								"value": "@{utcNow()}"
+							},
+							"Message": {
+								"type": "String",
+								"value": "Complete Load Forecast Configurations"
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "AzureSQLDynamic",
+						"type": "DatasetReference",
+						"parameters": {
+							"server": "sqlserver-dataplatform-general-dev.database.windows.net",
+							"schema": "dbo",
+							"table": "temp",
+							"DB": "dwh-meta-dev",
+							"User": "sqladmin",
+							"Password": "sCSmjvUoFIhEh2S"
+						}
+					}
+				}
+			},
+			{
+				"name": "InsertLog 4",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "GetForecastConfigs",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[engine].[AzurePipelineActivityLogsInsertUpdate_ZA]",
+						"storedProcedureParameters": {
+							"PipelineActivityLogId": {
+								"type": "Int32",
+								"value": {
+									"value": "@activity('InsertLog 2').output.firstRow.PipelineActivityLogId",
+									"type": "Expression"
+								}
+							},
+							"RunId": {
+								"type": "String",
+								"value": {
+									"value": "@{pipeline().RunId}",
+									"type": "Expression"
+								}
+							},
+							"ActivityName": {
+								"type": "String",
+								"value": "Load Forecast Configurations"
+							},
+							"LastUpdated": {
+								"type": "Datetime",
+								"value": {
+									"value": "@{utcNow()}",
+									"type": "Expression"
+								}
+							},
+							"Status": {
+								"type": "String",
+								"value": "Failed"
+							},
+							"ActivityStart": {
+								"type": "Datetime",
+								"value": null
+							},
+							"ActivityEnd": {
+								"type": "Datetime",
+								"value": "@{utcNow()}"
+							},
+							"Message": {
+								"type": "String",
+								"value": "Failed Load Forecast Configurations"
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "AzureSQLDynamic",
+						"type": "DatasetReference",
+						"parameters": {
+							"server": "sqlserver-dataplatform-general-dev.database.windows.net",
+							"schema": "dbo",
+							"table": "temp",
+							"DB": "dwh-meta-dev",
+							"User": "sqladmin",
+							"Password": "sCSmjvUoFIhEh2S"
+						}
+					}
+				}
+			},
+			{
+				"name": "InsertLog 5",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "InsertLog 3",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[engine].[AzurePipelineActivityLogsInsertUpdate_ZA]",
+						"storedProcedureParameters": {
+							"PipelineActivityLogId": {
+								"type": "Int32",
+								"value": "0"
+							},
+							"RunId": {
+								"type": "String",
+								"value": {
+									"value": "@{pipeline().RunId}",
+									"type": "Expression"
+								}
+							},
+							"ActivityName": {
+								"type": "String",
+								"value": "Set Forecast Configurations"
+							},
+							"LastUpdated": {
+								"type": "Datetime",
+								"value": {
+									"value": "@{utcNow()}",
+									"type": "Expression"
+								}
+							},
+							"Status": {
+								"type": "String",
+								"value": "In Progress"
+							},
+							"ActivityStart": {
+								"type": "Datetime",
+								"value": "@{utcNow()}"
+							},
+							"ActivityEnd": {
+								"type": "Datetime",
+								"value": null
+							},
+							"Message": {
+								"type": "String",
+								"value": "Start Set Forecast Configurations"
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "AzureSQLDynamic",
+						"type": "DatasetReference",
+						"parameters": {
+							"server": "sqlserver-dataplatform-general-dev.database.windows.net",
+							"schema": "dbo",
+							"table": "temp",
+							"DB": "dwh-meta-dev",
+							"User": "sqladmin",
+							"Password": "sCSmjvUoFIhEh2S"
+						}
+					}
+				}
+			},
+			{
+				"name": "InsertLog 6",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "Set ForecastConfigs",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[engine].[AzurePipelineActivityLogsInsertUpdate_ZA]",
+						"storedProcedureParameters": {
+							"PipelineActivityLogId": {
+								"type": "Int32",
+								"value": {
+									"value": "@activity('InsertLog 5').output.firstRow.PipelineActivityLogId",
+									"type": "Expression"
+								}
+							},
+							"RunId": {
+								"type": "String",
+								"value": {
+									"value": "@{pipeline().RunId}",
+									"type": "Expression"
+								}
+							},
+							"ActivityName": {
+								"type": "String",
+								"value": "Set Forecast Configurations"
+							},
+							"LastUpdated": {
+								"type": "Datetime",
+								"value": {
+									"value": "@{utcNow()}",
+									"type": "Expression"
+								}
+							},
+							"Status": {
+								"type": "String",
+								"value": "Completed"
+							},
+							"ActivityStart": {
+								"type": "Datetime",
+								"value": null
+							},
+							"ActivityEnd": {
+								"type": "Datetime",
+								"value": "@{utcNow()}"
+							},
+							"Message": {
+								"type": "String",
+								"value": "Complete Set Forecast Configurations"
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "AzureSQLDynamic",
+						"type": "DatasetReference",
+						"parameters": {
+							"server": "sqlserver-dataplatform-general-dev.database.windows.net",
+							"schema": "dbo",
+							"table": "temp",
+							"DB": "dwh-meta-dev",
+							"User": "sqladmin",
+							"Password": "sCSmjvUoFIhEh2S"
+						}
+					}
+				}
+			},
+			{
+				"name": "InsertLog 7",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "Set ForecastConfigs",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[engine].[AzurePipelineActivityLogsInsertUpdate_ZA]",
+						"storedProcedureParameters": {
+							"PipelineActivityLogId": {
+								"type": "Int32",
+								"value": {
+									"value": "@activity('InsertLog 5').output.firstRow.PipelineActivityLogId",
+									"type": "Expression"
+								}
+							},
+							"RunId": {
+								"type": "String",
+								"value": {
+									"value": "@{pipeline().RunId}",
+									"type": "Expression"
+								}
+							},
+							"ActivityName": {
+								"type": "String",
+								"value": "Set Forecast Configurations"
+							},
+							"LastUpdated": {
+								"type": "Datetime",
+								"value": {
+									"value": "@{utcNow()}",
+									"type": "Expression"
+								}
+							},
+							"Status": {
+								"type": "String",
+								"value": "Failed"
+							},
+							"ActivityStart": {
+								"type": "Datetime",
+								"value": null
+							},
+							"ActivityEnd": {
+								"type": "Datetime",
+								"value": "@{utcNow()}"
+							},
+							"Message": {
+								"type": "String",
+								"value": "Failed Set Forecast Configurations"
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "AzureSQLDynamic",
+						"type": "DatasetReference",
+						"parameters": {
+							"server": "sqlserver-dataplatform-general-dev.database.windows.net",
+							"schema": "dbo",
+							"table": "temp",
+							"DB": "dwh-meta-dev",
+							"User": "sqladmin",
+							"Password": "sCSmjvUoFIhEh2S"
+						}
+					}
+				}
+			},
+			{
+				"name": "InsertLog 8",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "InsertLog 6",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[engine].[AzurePipelineActivityLogsInsertUpdate_ZA]",
+						"storedProcedureParameters": {
+							"PipelineActivityLogId": {
+								"type": "Int32",
+								"value": "0"
+							},
+							"RunId": {
+								"type": "String",
+								"value": {
+									"value": "@{pipeline().RunId}",
+									"type": "Expression"
+								}
+							},
+							"ActivityName": {
+								"type": "String",
+								"value": "Generate Forecast Items & Key"
+							},
+							"LastUpdated": {
+								"type": "Datetime",
+								"value": {
+									"value": "@{utcNow()}",
+									"type": "Expression"
+								}
+							},
+							"Status": {
+								"type": "String",
+								"value": "In Progress"
+							},
+							"ActivityStart": {
+								"type": "Datetime",
+								"value": "@{utcNow()}"
+							},
+							"ActivityEnd": {
+								"type": "Datetime",
+								"value": null
+							},
+							"Message": {
+								"type": "String",
+								"value": "Start Generate Forecast Items & Key"
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "AzureSQLDynamic",
+						"type": "DatasetReference",
+						"parameters": {
+							"server": "sqlserver-dataplatform-general-dev.database.windows.net",
+							"schema": "dbo",
+							"table": "temp",
+							"DB": "dwh-meta-dev",
+							"User": "sqladmin",
+							"Password": "sCSmjvUoFIhEh2S"
+						}
+					}
+				}
+			},
+			{
+				"name": "InsertLog 6_copy1",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[engine].[AzurePipelineActivityLogsInsertUpdate_ZA]",
+						"storedProcedureParameters": {
+							"PipelineActivityLogId": {
+								"type": "Int32",
+								"value": {
+									"value": "@activity('InsertLog 5').output.firstRow.PipelineActivityLogId",
+									"type": "Expression"
+								}
+							},
+							"RunId": {
+								"type": "String",
+								"value": {
+									"value": "@{pipeline().RunId}",
+									"type": "Expression"
+								}
+							},
+							"ActivityName": {
+								"type": "String",
+								"value": "Set Forecast Configurations"
+							},
+							"LastUpdated": {
+								"type": "Datetime",
+								"value": {
+									"value": "@{utcNow()}",
+									"type": "Expression"
+								}
+							},
+							"Status": {
+								"type": "String",
+								"value": "Completed"
+							},
+							"ActivityStart": {
+								"type": "Datetime",
+								"value": null
+							},
+							"ActivityEnd": {
+								"type": "Datetime",
+								"value": "@{utcNow()}"
+							},
+							"Message": {
+								"type": "String",
+								"value": "Complete Set Forecast Configurations"
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "AzureSQLDynamic",
+						"type": "DatasetReference",
+						"parameters": {
+							"server": "sqlserver-dataplatform-general-dev.database.windows.net",
+							"schema": "dbo",
+							"table": "temp",
+							"DB": "dwh-meta-dev",
+							"User": "sqladmin",
+							"Password": "sCSmjvUoFIhEh2S"
+						}
 					}
 				}
 			}

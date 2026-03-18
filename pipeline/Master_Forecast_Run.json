@@ -654,14 +654,9 @@
 			{
 				"name": "Add Logs 7",
 				"type": "SqlServerStoredProcedure",
-				"dependsOn": [
-					{
-						"activity": "Generate Forecast ItemAccount and Key",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -775,14 +770,9 @@
 			{
 				"name": "Add Logs 9",
 				"type": "SqlServerStoredProcedure",
-				"dependsOn": [
-					{
-						"activity": "Generate Forecast ItemAccount and Key",
-						"dependencyConditions": [
-							"Failed"
-						]
-					}
-				],
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -1549,9 +1539,16 @@
 				}
 			},
 			{
-				"name": "InsertLog 6_copy1",
+				"name": "InsertLog 9",
 				"type": "Lookup",
-				"dependsOn": [],
+				"dependsOn": [
+					{
+						"activity": "Generate Forecast ItemAccount and Key",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -1568,7 +1565,7 @@
 							"PipelineActivityLogId": {
 								"type": "Int32",
 								"value": {
-									"value": "@activity('InsertLog 5').output.firstRow.PipelineActivityLogId",
+									"value": "@activity('InsertLog 8').output.firstRow.PipelineActivityLogId",
 									"type": "Expression"
 								}
 							},
@@ -1581,7 +1578,7 @@
 							},
 							"ActivityName": {
 								"type": "String",
-								"value": "Set Forecast Configurations"
+								"value": "Generate Forecast Items & Key"
 							},
 							"LastUpdated": {
 								"type": "Datetime",
@@ -1604,7 +1601,90 @@
 							},
 							"Message": {
 								"type": "String",
-								"value": "Complete Set Forecast Configurations"
+								"value": "Complete Generate Forecast Items & Key"
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "AzureSQLDynamic",
+						"type": "DatasetReference",
+						"parameters": {
+							"server": "sqlserver-dataplatform-general-dev.database.windows.net",
+							"schema": "dbo",
+							"table": "temp",
+							"DB": "dwh-meta-dev",
+							"User": "sqladmin",
+							"Password": "sCSmjvUoFIhEh2S"
+						}
+					}
+				}
+			},
+			{
+				"name": "InsertLog 10",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "Generate Forecast ItemAccount and Key",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[engine].[AzurePipelineActivityLogsInsertUpdate_ZA]",
+						"storedProcedureParameters": {
+							"PipelineActivityLogId": {
+								"type": "Int32",
+								"value": {
+									"value": "@activity('InsertLog 8').output.firstRow.PipelineActivityLogId",
+									"type": "Expression"
+								}
+							},
+							"RunId": {
+								"type": "String",
+								"value": {
+									"value": "@{pipeline().RunId}",
+									"type": "Expression"
+								}
+							},
+							"ActivityName": {
+								"type": "String",
+								"value": "Generate Forecast Items & Key"
+							},
+							"LastUpdated": {
+								"type": "Datetime",
+								"value": {
+									"value": "@{utcNow()}",
+									"type": "Expression"
+								}
+							},
+							"Status": {
+								"type": "String",
+								"value": "Failed"
+							},
+							"ActivityStart": {
+								"type": "Datetime",
+								"value": null
+							},
+							"ActivityEnd": {
+								"type": "Datetime",
+								"value": "@{utcNow()}"
+							},
+							"Message": {
+								"type": "String",
+								"value": "Failed Generate Forecast Items & Key"
 							}
 						},
 						"queryTimeout": "02:00:00",

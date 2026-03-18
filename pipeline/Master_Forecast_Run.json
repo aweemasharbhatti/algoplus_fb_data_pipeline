@@ -1085,6 +1085,658 @@
 						"password": "sCSmjvUoFIhEh2S"
 					}
 				}
+			},
+			{
+				"name": "check forecast run is enable",
+				"type": "IfCondition",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@activity('GetForecastConfigs').output.value[0].IsForecastRun",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "Copy data",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "AzureSqlSource",
+									"sqlReaderStoredProcedureName": "[engine].[ForecastpipelineData]",
+									"storedProcedureParameters": {
+										"PforecastKey": {
+											"type": "String",
+											"value": {
+												"value": "@activity('Generate Forecast ItemAccount and Key').output.firstRow.ForecastKey",
+												"type": "Expression"
+											}
+										}
+									},
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"sink": {
+									"type": "DelimitedTextSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "DelimitedTextWriteSettings",
+										"quoteAllText": true,
+										"fileExtension": ".txt"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "AzureSQLDynamic",
+									"type": "DatasetReference",
+									"parameters": {
+										"server": {
+											"value": "@activity('GetForecastConfigs').output.value[0].ServerName",
+											"type": "Expression"
+										},
+										"schema": {
+											"value": "@activity('GetForecastConfigs').output.value[0].TargetSchema",
+											"type": "Expression"
+										},
+										"table": "temp",
+										"DB": {
+											"value": "@activity('GetForecastConfigs').output.value[0].DB",
+											"type": "Expression"
+										},
+										"User": {
+											"value": "@activity('GetForecastConfigs').output.value[0].UserName",
+											"type": "Expression"
+										},
+										"Password": {
+											"value": "@activity('GetForecastConfigs').output.value[0].Password",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "CSVSinkDatasetV2",
+									"type": "DatasetReference",
+									"parameters": {
+										"folder": {
+											"value": "@concat(activity('GetForecastConfigs').output.value[0].Output_Path,'/',activity('Generate Forecast ItemAccount and Key').output.firstRow.ForecastKey)",
+											"type": "Expression"
+										},
+										"file": {
+											"value": "@activity('GetForecastConfigs').output.value[0].File_Name",
+											"type": "Expression"
+										},
+										"conatiner": {
+											"value": "@activity('GetForecastConfigs').output.value[0].ClientName",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			},
+			{
+				"name": "Check Generate Forecast Status",
+				"type": "IfCondition",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@and(\n    not(empty(activity('Generate Forecast ItemAccount and Key').output.firstRow.ForecastKey)),\n    not(equals(activity('Generate Forecast ItemAccount and Key').output.firstRow.ForecastKey, '-1'))\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Add Logs 3",
+				"type": "SqlServerStoredProcedure",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[engine].[AzurePipelineActivityLogsInsertUpdate_ZA]",
+					"storedProcedureParameters": {
+						"RunId": {
+							"value": "@{pipeline().RunId}",
+							"type": "String"
+						},
+						"ActivityName": {
+							"value": "Load Forecast Configurations",
+							"type": "String"
+						},
+						"LastUpdated": {
+							"value": "@{utcNow()}",
+							"type": "Datetime"
+						},
+						"Status": {
+							"value": "Completed",
+							"type": "String"
+						},
+						"ActivityStart": {
+							"value": "@{utcNow()}",
+							"type": "Datetime"
+						},
+						"ActivityEnd": {
+							"value": "@{utcNow()}",
+							"type": "Datetime"
+						},
+						"Message": {
+							"value": "End Load Forecast Configurations",
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureSQLparameterizedLink",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"server": "sqlserver-dataplatform-general-dev.database.windows.net",
+						"DB": "dwh-meta-dev",
+						"user": "sqladmin",
+						"password": "sCSmjvUoFIhEh2S"
+					}
+				}
+			},
+			{
+				"name": "Add Logs 4",
+				"type": "SqlServerStoredProcedure",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[engine].[AzurePipelineActivityLogsInsertUpdate_ZA]",
+					"storedProcedureParameters": {
+						"RunId": {
+							"value": "@{pipeline().RunId}",
+							"type": "String"
+						},
+						"ActivityName": {
+							"value": "Set Forecast Configurations",
+							"type": "String"
+						},
+						"LastUpdated": {
+							"value": "@{utcNow()}",
+							"type": "Datetime"
+						},
+						"Status": {
+							"value": "In Progress",
+							"type": "String"
+						},
+						"ActivityStart": {
+							"value": "@{utcNow()}",
+							"type": "Datetime"
+						},
+						"ActivityEnd": {
+							"value": "@{utcNow()}",
+							"type": "Datetime"
+						},
+						"Message": {
+							"value": "Start Set Forecast Configurations",
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureSQLparameterizedLink",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"server": "sqlserver-dataplatform-general-dev.database.windows.net",
+						"DB": "dwh-meta-dev",
+						"user": "sqladmin",
+						"password": "sCSmjvUoFIhEh2S"
+					}
+				}
+			},
+			{
+				"name": "Add Logs 5",
+				"type": "SqlServerStoredProcedure",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[engine].[AzurePipelineActivityLogsInsertUpdate_ZA]",
+					"storedProcedureParameters": {
+						"RunId": {
+							"value": "@{pipeline().RunId}",
+							"type": "String"
+						},
+						"ActivityName": {
+							"value": "Set Forecast Configurations",
+							"type": "String"
+						},
+						"LastUpdated": {
+							"value": "@{utcNow()}",
+							"type": "Datetime"
+						},
+						"Status": {
+							"value": "Completed",
+							"type": "String"
+						},
+						"ActivityStart": {
+							"value": "@{utcNow()}",
+							"type": "Datetime"
+						},
+						"ActivityEnd": {
+							"value": "@{utcNow()}",
+							"type": "Datetime"
+						},
+						"Message": {
+							"value": "End Set Forecast Configurations",
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureSQLparameterizedLink",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"server": "sqlserver-dataplatform-general-dev.database.windows.net",
+						"DB": "dwh-meta-dev",
+						"user": "sqladmin",
+						"password": "sCSmjvUoFIhEh2S"
+					}
+				}
+			},
+			{
+				"name": "Add Logs 6",
+				"type": "SqlServerStoredProcedure",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[engine].[AzurePipelineActivityLogsInsertUpdate_ZA]",
+					"storedProcedureParameters": {
+						"RunId": {
+							"value": "@{pipeline().RunId}",
+							"type": "String"
+						},
+						"ActivityName": {
+							"value": "Generate Forecast Items & Key",
+							"type": "String"
+						},
+						"LastUpdated": {
+							"value": "@{utcNow()}",
+							"type": "Datetime"
+						},
+						"Status": {
+							"value": "In Progress",
+							"type": "String"
+						},
+						"ActivityStart": {
+							"value": "@{utcNow()}",
+							"type": "Datetime"
+						},
+						"ActivityEnd": {
+							"value": "@{utcNow()}",
+							"type": "Datetime"
+						},
+						"Message": {
+							"value": "Start Generate Forecast Items & Key",
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureSQLparameterizedLink",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"server": "sqlserver-dataplatform-general-dev.database.windows.net",
+						"DB": "dwh-meta-dev",
+						"user": "sqladmin",
+						"password": "sCSmjvUoFIhEh2S"
+					}
+				}
+			},
+			{
+				"name": "Add Logs 8",
+				"type": "SqlServerStoredProcedure",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[engine].[AzurePipelineActivityLogsInsertUpdate_ZA]",
+					"storedProcedureParameters": {
+						"RunId": {
+							"value": "@{pipeline().RunId}",
+							"type": "String"
+						},
+						"ActivityName": {
+							"value": "Load Forecast Configurations",
+							"type": "String"
+						},
+						"LastUpdated": {
+							"value": "@{utcNow()}",
+							"type": "Datetime"
+						},
+						"Status": {
+							"value": "Failed",
+							"type": "String"
+						},
+						"ActivityStart": {
+							"value": "@{utcNow()}",
+							"type": "Datetime"
+						},
+						"ActivityEnd": {
+							"value": "@{utcNow()}",
+							"type": "Datetime"
+						},
+						"Message": {
+							"value": "Error in Load Forecast Configurations",
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureSQLparameterizedLink",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"server": "sqlserver-dataplatform-general-dev.database.windows.net",
+						"DB": "dwh-meta-dev",
+						"user": "sqladmin",
+						"password": "sCSmjvUoFIhEh2S"
+					}
+				}
+			},
+			{
+				"name": "Add Logs 9",
+				"type": "SqlServerStoredProcedure",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[engine].[AzurePipelineActivityLogsInsertUpdate_ZA]",
+					"storedProcedureParameters": {
+						"RunId": {
+							"value": "@{pipeline().RunId}",
+							"type": "String"
+						},
+						"ActivityName": {
+							"value": "Generate Forecast Items & Key",
+							"type": "String"
+						},
+						"LastUpdated": {
+							"value": "@{utcNow()}",
+							"type": "Datetime"
+						},
+						"Status": {
+							"value": "Failed",
+							"type": "String"
+						},
+						"ActivityStart": {
+							"value": "@{utcNow()}",
+							"type": "Datetime"
+						},
+						"ActivityEnd": {
+							"value": "@{utcNow()}",
+							"type": "Datetime"
+						},
+						"Message": {
+							"value": "Error in Generate Forecast Items & Key",
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureSQLparameterizedLink",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"server": "sqlserver-dataplatform-general-dev.database.windows.net",
+						"DB": "dwh-meta-dev",
+						"user": "sqladmin",
+						"password": "sCSmjvUoFIhEh2S"
+					}
+				}
+			},
+			{
+				"name": "Add Logs 10",
+				"type": "SqlServerStoredProcedure",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[engine].[AzurePipelineActivityLogsInsertUpdate_ZA]",
+					"storedProcedureParameters": {
+						"RunId": {
+							"value": "@{pipeline().RunId}",
+							"type": "String"
+						},
+						"ActivityName": {
+							"value": "Set Forecast Configurations",
+							"type": "String"
+						},
+						"LastUpdated": {
+							"value": "@{utcNow()}",
+							"type": "Datetime"
+						},
+						"Status": {
+							"value": "Failed",
+							"type": "String"
+						},
+						"ActivityStart": {
+							"value": "@{utcNow()}",
+							"type": "Datetime"
+						},
+						"ActivityEnd": {
+							"value": "@{utcNow()}",
+							"type": "Datetime"
+						},
+						"Message": {
+							"value": "Error in Set Forecast Configurations",
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureSQLparameterizedLink",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"server": "sqlserver-dataplatform-general-dev.database.windows.net",
+						"DB": "dwh-meta-dev",
+						"user": "sqladmin",
+						"password": "sCSmjvUoFIhEh2S"
+					}
+				}
+			},
+			{
+				"name": "ForecastDataPipelineV2",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "InsertLog 9",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "ForcastDatapipelineV2",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"forecast_future_weeks": {
+							"value": "@activity('GetForecastConfigs').output.value[0].Forecast_Future_Weeks",
+							"type": "Expression"
+						},
+						"delimiterInput": {
+							"value": "@activity('GetForecastConfigs').output.value[0].Delimiter_Input",
+							"type": "Expression"
+						},
+						"forecast_week_start_day": {
+							"value": "@activity('GetForecastConfigs').output.value[0].Forecast_Week_Start_Day",
+							"type": "Expression"
+						},
+						"headerInput": {
+							"value": "@activity('GetForecastConfigs').output.value[0].HeaderInput",
+							"type": "Expression"
+						},
+						"repartitionInput": {
+							"value": "@activity('GetForecastConfigs').output.value[0].RepartitionInput",
+							"type": "Expression"
+						},
+						"lookback_window": {
+							"value": "@activity('GetForecastConfigs').output.value[0].Lookback_Window",
+							"type": "Expression"
+						},
+						"forecast_type": {
+							"value": "@activity('GetForecastConfigs').output.value[0].Forecast_Type",
+							"type": "Expression"
+						},
+						"file_name": {
+							"value": "@activity('GetForecastConfigs').output.value[0].File_Name",
+							"type": "Expression"
+						},
+						"notebook_output_file_path": {
+							"value": "@activity('GetForecastConfigs').output.value[0].Notebook_Output_File_Path",
+							"type": "Expression"
+						},
+						"output_path": {
+							"value": "@activity('GetForecastConfigs').output.value[0].Output_Path",
+							"type": "Expression"
+						},
+						"furture_week_start_date": {
+							"value": "@activity('GetForecastConfigs').output.value[0].Furture_Week_Start_Date",
+							"type": "Expression"
+						},
+						"forecast_key": {
+							"value": "@activity('Generate Forecast ItemAccount and Key').output.firstRow.ForecastKey",
+							"type": "Expression"
+						},
+						"wma_weights": {
+							"value": "@activity('GetForecastConfigs').output.value[0].Wma_Weights",
+							"type": "Expression"
+						},
+						"cluster_type": {
+							"value": "@activity('GetForecastConfigs').output.value[0].Cluster_Type",
+							"type": "Expression"
+						},
+						"worker_node": {
+							"value": "@activity('GetForecastConfigs').output.value[0].Worker_Node",
+							"type": "Expression"
+						},
+						"client_name": {
+							"value": "@activity('GetForecastConfigs').output.value[0].ClientName",
+							"type": "Expression"
+						},
+						"target_schema": {
+							"value": "@activity('GetForecastConfigs').output.value[0].TargetSchema",
+							"type": "Expression"
+						},
+						"target_table": {
+							"value": "@activity('GetForecastConfigs').output.value[0].TargetTable",
+							"type": "Expression"
+						},
+						"servername": {
+							"value": "@activity('GetForecastConfigs').output.value[0].ServerName",
+							"type": "Expression"
+						},
+						"database": {
+							"value": "@activity('GetForecastConfigs').output.value[0].DB",
+							"type": "Expression"
+						},
+						"user": {
+							"value": "@activity('GetForecastConfigs').output.value[0].UserName",
+							"type": "Expression"
+						},
+						"password": {
+							"value": "@activity('GetForecastConfigs').output.value[0].Password",
+							"type": "Expression"
+						},
+						"locklookback": {
+							"value": "@activity('GetForecastConfigs').output.value[0].locklookback",
+							"type": "Expression"
+						}
+					}
+				}
 			}
 		],
 		"variables": {

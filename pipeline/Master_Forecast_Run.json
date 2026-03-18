@@ -36,7 +36,7 @@
 						"parameters": {
 							"server": "sqlserver-dataplatform-general-dev.database.windows.net",
 							"schema": "engine",
-							"table": "ForecastPipelineConfig2",
+							"table": "ForecastPipelineConfig",
 							"DB": "dwh-meta-dev",
 							"User": "sqladmin",
 							"Password": "sCSmjvUoFIhEh2S"
@@ -971,6 +971,89 @@
 						},
 						"Message": {
 							"value": "Error in Set Forecast Configurations",
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureSQLparameterizedLink",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"server": "sqlserver-dataplatform-general-dev.database.windows.net",
+						"DB": "dwh-meta-dev",
+						"user": "sqladmin",
+						"password": "sCSmjvUoFIhEh2S"
+					}
+				}
+			},
+			{
+				"name": "Pipeline Logs_Complete",
+				"type": "SqlServerStoredProcedure",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[engine].[AzurePipelineTriggerInsertUpdate]",
+					"storedProcedureParameters": {
+						"PPipeLineTriggerId": {
+							"value": "0",
+							"type": "Int32"
+						},
+						"PRunId": {
+							"value": {
+								"value": "@{pipeline().RunId}",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"PRunGroupId": {
+							"value": {
+								"value": "@{pipeline().RunId}",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"PIsLatest": {
+							"value": "true",
+							"type": "Boolean"
+						},
+						"PPipelineName": {
+							"value": "Master Forecast Pipeline",
+							"type": "String"
+						},
+						"PLastUpdated": {
+							"value": {
+								"value": "@utcNow()",
+								"type": "Expression"
+							},
+							"type": "Datetime"
+						},
+						"PRunStart": {
+							"value": "@utcNow()",
+							"type": "Datetime"
+						},
+						"PRunEnd": {
+							"value": null,
+							"type": "Datetime"
+						},
+						"PDurationInMs": {
+							"value": null,
+							"type": "Int32"
+						},
+						"PStatus": {
+							"value": "Succeeded",
+							"type": "String"
+						},
+						"PMessage": {
+							"value": "Master Forecast Pipeline Completed",
 							"type": "String"
 						}
 					}

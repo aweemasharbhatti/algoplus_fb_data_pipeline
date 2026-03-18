@@ -1656,7 +1656,7 @@
 							"type": "Expression"
 						},
 						"headerInput": {
-							"value": "@activity('GetForecastConfigs').output.value[0].HeaderInput",
+							"value": "@string(activity('GetForecastConfigs').output.value[0].HeaderInput)",
 							"type": "Expression"
 						},
 						"repartitionInput": {

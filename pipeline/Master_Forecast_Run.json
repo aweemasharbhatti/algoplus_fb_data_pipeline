@@ -1027,6 +1027,64 @@
 						}
 					}
 				}
+			},
+			{
+				"name": "Add Logs 7",
+				"type": "SqlServerStoredProcedure",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[engine].[AzurePipelineActivityLogsInsertUpdate_ZA]",
+					"storedProcedureParameters": {
+						"RunId": {
+							"value": "@{pipeline().RunId}",
+							"type": "String"
+						},
+						"ActivityName": {
+							"value": "Generate Forecast Items & Key",
+							"type": "String"
+						},
+						"LastUpdated": {
+							"value": "@{utcNow()}",
+							"type": "Datetime"
+						},
+						"Status": {
+							"value": "Completed",
+							"type": "String"
+						},
+						"ActivityStart": {
+							"value": "@{utcNow()}",
+							"type": "Datetime"
+						},
+						"ActivityEnd": {
+							"value": "@{utcNow()}",
+							"type": "Datetime"
+						},
+						"Message": {
+							"value": "End Generate Forecast Items & Key",
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureSQLparameterizedLink",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"server": "sqlserver-dataplatform-general-dev.database.windows.net",
+						"DB": "dwh-meta-dev",
+						"user": "sqladmin",
+						"password": "sCSmjvUoFIhEh2S"
+					}
+				}
 			}
 		],
 		"variables": {

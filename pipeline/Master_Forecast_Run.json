@@ -1660,7 +1660,7 @@
 							"type": "Expression"
 						},
 						"repartitionInput": {
-							"value": "@activity('GetForecastConfigs').output.value[0].RepartitionInput",
+							"value": "@string(activity('GetForecastConfigs').output.value[0].RepartitionInput)",
 							"type": "Expression"
 						},
 						"lookback_window": {
@@ -1732,7 +1732,7 @@
 							"type": "Expression"
 						},
 						"locklookback": {
-							"value": "@activity('GetForecastConfigs').output.value[0].locklookback",
+							"value": "@string(activity('GetForecastConfigs').output.value[0].locklookback)",
 							"type": "Expression"
 						}
 					}

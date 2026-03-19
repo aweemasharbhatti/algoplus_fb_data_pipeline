@@ -237,7 +237,7 @@
 				"type": "SqlServerStoredProcedure",
 				"dependsOn": [
 					{
-						"activity": "Master Pipeline Run",
+						"activity": "Master Forecast Pipeline Starts",
 						"dependencyConditions": [
 							"Failed"
 						]
@@ -312,7 +312,7 @@
 				"type": "Lookup",
 				"dependsOn": [
 					{
-						"activity": "Master Pipeline Run",
+						"activity": "Master Forecast Pipeline Starts",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -1881,7 +1881,7 @@
 				}
 			},
 			{
-				"name": "Master Pipeline Run",
+				"name": "Master Forecast Pipeline Starts",
 				"type": "Lookup",
 				"dependsOn": [],
 				"policy": {
@@ -1936,6 +1936,182 @@
 							"PStatus": {
 								"type": "String",
 								"value": "In Progress"
+							},
+							"PMessage": {
+								"type": "String",
+								"value": "Master Forecast Pipeline Running"
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "AzureSQLDynamic",
+						"type": "DatasetReference",
+						"parameters": {
+							"server": "sqlserver-dataplatform-general-dev.database.windows.net",
+							"schema": "engine",
+							"table": "temptb",
+							"DB": "dwh-meta-dev",
+							"User": "sqladmin",
+							"Password": "sCSmjvUoFIhEh2S"
+						}
+					}
+				}
+			},
+			{
+				"name": "Master Forecast Pipeline Complete",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "ForecastDataPipelineV2",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[engine].[AzurePipelineTriggerInsertUpdate]",
+						"storedProcedureParameters": {
+							"PPipeLineTriggerId": {
+								"type": "Int32",
+								"value": {
+									"value": "@activity('Master Forecast Pipeline Starts').output.firstRow.PipeLineTriggerId",
+									"type": "Expression"
+								}
+							},
+							"PRunId": {
+								"type": "String",
+								"value": "@{pipeline().RunId}"
+							},
+							"PRunGroupId": {
+								"type": "String",
+								"value": "@{pipeline().RunId}"
+							},
+							"PIsLatest": {
+								"type": "Boolean",
+								"value": "true"
+							},
+							"PPipelineName": {
+								"type": "String",
+								"value": "Master Forecast Pipeline"
+							},
+							"PLastUpdated": {
+								"type": "Datetime",
+								"value": "@utcNow()"
+							},
+							"PRunStart": {
+								"type": "Datetime"
+							},
+							"PRunEnd": {
+								"type": "Datetime",
+								"value": "@utcNow()"
+							},
+							"PDurationInMs": {
+								"type": "Int32",
+								"value": null
+							},
+							"PStatus": {
+								"type": "String",
+								"value": "Succedded"
+							},
+							"PMessage": {
+								"type": "String",
+								"value": "Master Forecast Pipeline Running"
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "AzureSQLDynamic",
+						"type": "DatasetReference",
+						"parameters": {
+							"server": "sqlserver-dataplatform-general-dev.database.windows.net",
+							"schema": "engine",
+							"table": "temptb",
+							"DB": "dwh-meta-dev",
+							"User": "sqladmin",
+							"Password": "sCSmjvUoFIhEh2S"
+						}
+					}
+				}
+			},
+			{
+				"name": "Master Forecast Pipeline Failed",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "ForecastDataPipelineV2",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[engine].[AzurePipelineTriggerInsertUpdate]",
+						"storedProcedureParameters": {
+							"PPipeLineTriggerId": {
+								"type": "Int32",
+								"value": {
+									"value": "@activity('Master Forecast Pipeline Starts').output.firstRow.PipeLineTriggerId",
+									"type": "Expression"
+								}
+							},
+							"PRunId": {
+								"type": "String",
+								"value": "@{pipeline().RunId}"
+							},
+							"PRunGroupId": {
+								"type": "String",
+								"value": "@{pipeline().RunId}"
+							},
+							"PIsLatest": {
+								"type": "Boolean",
+								"value": "true"
+							},
+							"PPipelineName": {
+								"type": "String",
+								"value": "Master Forecast Pipeline"
+							},
+							"PLastUpdated": {
+								"type": "Datetime",
+								"value": "@utcNow()"
+							},
+							"PRunStart": {
+								"type": "Datetime"
+							},
+							"PRunEnd": {
+								"type": "Datetime",
+								"value": "@utcNow()"
+							},
+							"PDurationInMs": {
+								"type": "Int32",
+								"value": null
+							},
+							"PStatus": {
+								"type": "String",
+								"value": "Succedded"
 							},
 							"PMessage": {
 								"type": "String",

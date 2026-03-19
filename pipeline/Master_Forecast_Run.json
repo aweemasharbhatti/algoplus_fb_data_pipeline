@@ -1864,7 +1864,7 @@
 							"type": "Expression"
 						},
 						"user": {
-							"value": "@activity('GetForecastConfigs').output.value[0].UserName3",
+							"value": "@activity('GetForecastConfigs').output.value[0].UserName",
 							"type": "Expression"
 						},
 						"password": {
@@ -2101,7 +2101,8 @@
 								"value": "@utcNow()"
 							},
 							"PRunStart": {
-								"type": "Datetime"
+								"type": "Datetime",
+								"value": "@variables('RunStartTime')"
 							},
 							"PRunEnd": {
 								"type": "Datetime",
@@ -2113,11 +2114,11 @@
 							},
 							"PStatus": {
 								"type": "String",
-								"value": "Succedded"
+								"value": "Failed"
 							},
 							"PMessage": {
 								"type": "String",
-								"value": "Master Forecast Pipeline Running"
+								"value": "Master Forecast Pipeline Failed"
 							}
 						},
 						"queryTimeout": "02:00:00",

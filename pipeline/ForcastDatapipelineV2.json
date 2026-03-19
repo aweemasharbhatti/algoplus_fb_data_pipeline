@@ -115,7 +115,14 @@
 			{
 				"name": "Copy data",
 				"type": "Copy",
-				"dependsOn": [],
+				"dependsOn": [
+					{
+						"activity": "Child Forecast Pipeline Starts",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
 				"policy": {
 					"timeout": "7.00:00:00",
 					"retry": 1,
@@ -463,6 +470,88 @@
 						}
 					],
 					"scriptBlockExecutionTimeout": "02:00:00"
+				}
+			},
+			{
+				"name": "Child Forecast Pipeline Starts",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[engine].[AzurePipelineTriggerInsertUpdate]",
+						"storedProcedureParameters": {
+							"PPipeLineTriggerId": {
+								"type": "Int32",
+								"value": "0"
+							},
+							"PRunId": {
+								"type": "String",
+								"value": "@{pipeline().RunId}"
+							},
+							"PRunGroupId": {
+								"type": "String",
+								"value": "@{pipeline().RunId}"
+							},
+							"PIsLatest": {
+								"type": "Boolean",
+								"value": "true"
+							},
+							"PPipelineName": {
+								"type": "String",
+								"value": "ForcastDatapipelineV2"
+							},
+							"PLastUpdated": {
+								"type": "Datetime",
+								"value": "@utcNow()"
+							},
+							"PRunStart": {
+								"type": "Datetime",
+								"value": {
+									"value": "@utcNow()",
+									"type": "Expression"
+								}
+							},
+							"PRunEnd": {
+								"type": "Datetime",
+								"value": null
+							},
+							"PDurationInMs": {
+								"type": "Int32",
+								"value": null
+							},
+							"PStatus": {
+								"type": "String",
+								"value": "In Progress"
+							},
+							"PMessage": {
+								"type": "String",
+								"value": "ForcastDatapipelineV2 is Running"
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "AzureSQLDynamic",
+						"type": "DatasetReference",
+						"parameters": {
+							"server": "@pipeline().parameters.servername",
+							"schema": "engine",
+							"table": "temptb",
+							"DB": "@pipeline().parameters.database",
+							"User": "@pipeline().parameters.user",
+							"Password": "@pipeline().parameters.password"
+						}
+					}
 				}
 			}
 		],

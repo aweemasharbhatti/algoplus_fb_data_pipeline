@@ -1764,8 +1764,6 @@
 			{
 				"name": "ForecastDataPipelineV2",
 				"type": "ExecutePipeline",
-				"state": "Inactive",
-				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [
 					{
 						"activity": "InsertLog 9",

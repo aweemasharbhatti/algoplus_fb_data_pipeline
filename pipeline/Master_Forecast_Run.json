@@ -1766,7 +1766,7 @@
 				"type": "ExecutePipeline",
 				"dependsOn": [
 					{
-						"activity": "InsertLog 9",
+						"activity": "InsertLog 11",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -1961,7 +1961,7 @@
 				}
 			},
 			{
-				"name": "Master Forecast Pipeline Complete",
+				"name": "Master Forecast Pipeline Completed",
 				"type": "Lookup",
 				"dependsOn": [
 					{
@@ -2131,6 +2131,261 @@
 							"server": "sqlserver-dataplatform-general-dev.database.windows.net",
 							"schema": "engine",
 							"table": "temptb",
+							"DB": "dwh-meta-dev",
+							"User": "sqladmin",
+							"Password": "sCSmjvUoFIhEh2S"
+						}
+					}
+				}
+			},
+			{
+				"name": "InsertLog 11",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "InsertLog 9",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[engine].[AzurePipelineActivityLogsInsertUpdate_ZA]",
+						"storedProcedureParameters": {
+							"PipelineActivityLogId": {
+								"type": "Int32",
+								"value": "0"
+							},
+							"RunId": {
+								"type": "String",
+								"value": {
+									"value": "@{pipeline().RunId}",
+									"type": "Expression"
+								}
+							},
+							"ActivityName": {
+								"type": "String",
+								"value": "Execution of Forecast Child Pipeline"
+							},
+							"LastUpdated": {
+								"type": "Datetime",
+								"value": {
+									"value": "@{utcNow()}",
+									"type": "Expression"
+								}
+							},
+							"Status": {
+								"type": "String",
+								"value": "In Progress"
+							},
+							"ActivityStart": {
+								"type": "Datetime",
+								"value": {
+									"value": "@{utcNow()}",
+									"type": "Expression"
+								}
+							},
+							"ActivityEnd": {
+								"type": "Datetime",
+								"value": null
+							},
+							"Message": {
+								"type": "String",
+								"value": "Start Execution of Forecast Child Pipeline"
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "AzureSQLDynamic",
+						"type": "DatasetReference",
+						"parameters": {
+							"server": "sqlserver-dataplatform-general-dev.database.windows.net",
+							"schema": "dbo",
+							"table": "temp",
+							"DB": "dwh-meta-dev",
+							"User": "sqladmin",
+							"Password": "sCSmjvUoFIhEh2S"
+						}
+					}
+				}
+			},
+			{
+				"name": "Forecast Child Pipeline Completed",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "ForecastDataPipelineV2",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[engine].[AzurePipelineActivityLogsInsertUpdate_ZA]",
+						"storedProcedureParameters": {
+							"PipelineActivityLogId": {
+								"type": "Int32",
+								"value": {
+									"value": "@activity('InsertLog 11').output.firstRow.PipelineActivityLogId",
+									"type": "Expression"
+								}
+							},
+							"RunId": {
+								"type": "String",
+								"value": {
+									"value": "@{pipeline().RunId}",
+									"type": "Expression"
+								}
+							},
+							"ActivityName": {
+								"type": "String",
+								"value": "Execution of Forecast Child Pipeline"
+							},
+							"LastUpdated": {
+								"type": "Datetime",
+								"value": {
+									"value": "@{utcNow()}",
+									"type": "Expression"
+								}
+							},
+							"Status": {
+								"type": "String",
+								"value": "Completed"
+							},
+							"ActivityStart": {
+								"type": "Datetime",
+								"value": null
+							},
+							"ActivityEnd": {
+								"type": "Datetime",
+								"value": {
+									"value": "@utcNow()",
+									"type": "Expression"
+								}
+							},
+							"Message": {
+								"type": "String",
+								"value": "Complete Execution of Forecast Child Pipeline"
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "AzureSQLDynamic",
+						"type": "DatasetReference",
+						"parameters": {
+							"server": "sqlserver-dataplatform-general-dev.database.windows.net",
+							"schema": "dbo",
+							"table": "temp",
+							"DB": "dwh-meta-dev",
+							"User": "sqladmin",
+							"Password": "sCSmjvUoFIhEh2S"
+						}
+					}
+				}
+			},
+			{
+				"name": "Forecast Child Pipeline Failed",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "ForecastDataPipelineV2",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[engine].[AzurePipelineActivityLogsInsertUpdate_ZA]",
+						"storedProcedureParameters": {
+							"PipelineActivityLogId": {
+								"type": "Int32",
+								"value": {
+									"value": "@activity('InsertLog 11').output.firstRow.PipelineActivityLogId",
+									"type": "Expression"
+								}
+							},
+							"RunId": {
+								"type": "String",
+								"value": {
+									"value": "@{pipeline().RunId}",
+									"type": "Expression"
+								}
+							},
+							"ActivityName": {
+								"type": "String",
+								"value": "Execution of Forecast Child Pipeline"
+							},
+							"LastUpdated": {
+								"type": "Datetime",
+								"value": {
+									"value": "@{utcNow()}",
+									"type": "Expression"
+								}
+							},
+							"Status": {
+								"type": "String",
+								"value": "Failed"
+							},
+							"ActivityStart": {
+								"type": "Datetime",
+								"value": null
+							},
+							"ActivityEnd": {
+								"type": "Datetime",
+								"value": {
+									"value": "@utcNow()",
+									"type": "Expression"
+								}
+							},
+							"Message": {
+								"type": "String",
+								"value": "Failed Execution of Forecast Child Pipeline"
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "AzureSQLDynamic",
+						"type": "DatasetReference",
+						"parameters": {
+							"server": "sqlserver-dataplatform-general-dev.database.windows.net",
+							"schema": "dbo",
+							"table": "temp",
 							"DB": "dwh-meta-dev",
 							"User": "sqladmin",
 							"Password": "sCSmjvUoFIhEh2S"

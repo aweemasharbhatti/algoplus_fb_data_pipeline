@@ -158,7 +158,10 @@
 							"type": "Datetime"
 						},
 						"PRunStart": {
-							"value": "@utcNow()",
+							"value": {
+								"value": "@utcNow()",
+								"type": "Expression"
+							},
 							"type": "Datetime"
 						},
 						"PRunEnd": {
@@ -191,7 +194,7 @@
 				}
 			},
 			{
-				"name": "Add Logs 11111",
+				"name": "Add Logs",
 				"type": "Script",
 				"state": "Inactive",
 				"onInactiveMarkAs": "Succeeded",
@@ -250,7 +253,10 @@
 					"storedProcedureName": "[engine].[AzurePipelineActivityLogsInsertUpdate_ZA]",
 					"storedProcedureParameters": {
 						"RunId": {
-							"value": "@{pipeline().RunId}",
+							"value": {
+								"value": "@{pipeline().RunId}",
+								"type": "Expression"
+							},
 							"type": "String"
 						},
 						"ActivityName": {
@@ -258,7 +264,10 @@
 							"type": "String"
 						},
 						"LastUpdated": {
-							"value": "@{utcNow()}",
+							"value": {
+								"value": "@{utcNow()}",
+								"type": "Expression"
+							},
 							"type": "Datetime"
 						},
 						"Status": {
@@ -266,11 +275,17 @@
 							"type": "String"
 						},
 						"ActivityStart": {
-							"value": "@{utcNow()}",
+							"value": {
+								"value": "@{utcNow()}",
+								"type": "Expression"
+							},
 							"type": "Datetime"
 						},
 						"ActivityEnd": {
-							"value": "@{utcNow()}",
+							"value": {
+								"value": "@{utcNow()}",
+								"type": "Expression"
+							},
 							"type": "Datetime"
 						},
 						"Message": {
@@ -342,7 +357,10 @@
 							},
 							"ActivityStart": {
 								"type": "Datetime",
-								"value": "@{utcNow()}"
+								"value": {
+									"value": "@{utcNow()}",
+									"type": "Expression"
+								}
 							},
 							"ActivityEnd": {
 								"type": "Datetime",
@@ -429,7 +447,10 @@
 							},
 							"ActivityEnd": {
 								"type": "Datetime",
-								"value": "@{utcNow()}"
+								"value": {
+									"value": "@{utcNow()}",
+									"type": "Expression"
+								}
 							},
 							"Message": {
 								"type": "String",
@@ -512,7 +533,10 @@
 							},
 							"ActivityEnd": {
 								"type": "Datetime",
-								"value": "@{utcNow()}"
+								"value": {
+									"value": "@{utcNow()}",
+									"type": "Expression"
+								}
 							},
 							"Message": {
 								"type": "String",
@@ -588,7 +612,10 @@
 							},
 							"ActivityStart": {
 								"type": "Datetime",
-								"value": "@{utcNow()}"
+								"value": {
+									"value": "@{utcNow()}",
+									"type": "Expression"
+								}
 							},
 							"ActivityEnd": {
 								"type": "Datetime",
@@ -675,7 +702,10 @@
 							},
 							"ActivityEnd": {
 								"type": "Datetime",
-								"value": "@{utcNow()}"
+								"value": {
+									"value": "@{utcNow()}",
+									"type": "Expression"
+								}
 							},
 							"Message": {
 								"type": "String",
@@ -758,7 +788,10 @@
 							},
 							"ActivityEnd": {
 								"type": "Datetime",
-								"value": "@{utcNow()}"
+								"value": {
+									"value": "@{utcNow()}",
+									"type": "Expression"
+								}
 							},
 							"Message": {
 								"type": "String",
@@ -834,7 +867,10 @@
 							},
 							"ActivityStart": {
 								"type": "Datetime",
-								"value": "@{utcNow()}"
+								"value": {
+									"value": "@{utcNow()}",
+									"type": "Expression"
+								}
 							},
 							"ActivityEnd": {
 								"type": "Datetime",
@@ -921,7 +957,10 @@
 							},
 							"ActivityEnd": {
 								"type": "Datetime",
-								"value": "@{utcNow()}"
+								"value": {
+									"value": "@{utcNow()}",
+									"type": "Expression"
+								}
 							},
 							"Message": {
 								"type": "String",
@@ -1004,7 +1043,10 @@
 							},
 							"ActivityEnd": {
 								"type": "Datetime",
-								"value": "@{utcNow()}"
+								"value": {
+									"value": "@{utcNow()}",
+									"type": "Expression"
+								}
 							},
 							"Message": {
 								"type": "String",
@@ -1046,7 +1088,10 @@
 					"storedProcedureName": "[engine].[AzurePipelineActivityLogsInsertUpdate_ZA]",
 					"storedProcedureParameters": {
 						"RunId": {
-							"value": "@{pipeline().RunId}",
+							"value": {
+								"value": "@{pipeline().RunId}",
+								"type": "Expression"
+							},
 							"type": "String"
 						},
 						"ActivityName": {
@@ -1054,7 +1099,10 @@
 							"type": "String"
 						},
 						"LastUpdated": {
-							"value": "@{utcNow()}",
+							"value": {
+								"value": "@{utcNow()}",
+								"type": "Expression"
+							},
 							"type": "Datetime"
 						},
 						"Status": {
@@ -1062,11 +1110,17 @@
 							"type": "String"
 						},
 						"ActivityStart": {
-							"value": "@{utcNow()}",
+							"value": {
+								"value": "@{utcNow()}",
+								"type": "Expression"
+							},
 							"type": "Datetime"
 						},
 						"ActivityEnd": {
-							"value": "@{utcNow()}",
+							"value": {
+								"value": "@{utcNow()}",
+								"type": "Expression"
+							},
 							"type": "Datetime"
 						},
 						"Message": {
@@ -1233,7 +1287,10 @@
 					"storedProcedureName": "[engine].[AzurePipelineActivityLogsInsertUpdate_ZA]",
 					"storedProcedureParameters": {
 						"RunId": {
-							"value": "@{pipeline().RunId}",
+							"value": {
+								"value": "@{pipeline().RunId}",
+								"type": "Expression"
+							},
 							"type": "String"
 						},
 						"ActivityName": {
@@ -1241,7 +1298,10 @@
 							"type": "String"
 						},
 						"LastUpdated": {
-							"value": "@{utcNow()}",
+							"value": {
+								"value": "@{utcNow()}",
+								"type": "Expression"
+							},
 							"type": "Datetime"
 						},
 						"Status": {
@@ -1249,11 +1309,17 @@
 							"type": "String"
 						},
 						"ActivityStart": {
-							"value": "@{utcNow()}",
+							"value": {
+								"value": "@{utcNow()}",
+								"type": "Expression"
+							},
 							"type": "Datetime"
 						},
 						"ActivityEnd": {
-							"value": "@{utcNow()}",
+							"value": {
+								"value": "@{utcNow()}",
+								"type": "Expression"
+							},
 							"type": "Datetime"
 						},
 						"Message": {
@@ -1291,7 +1357,10 @@
 					"storedProcedureName": "[engine].[AzurePipelineActivityLogsInsertUpdate_ZA]",
 					"storedProcedureParameters": {
 						"RunId": {
-							"value": "@{pipeline().RunId}",
+							"value": {
+								"value": "@{pipeline().RunId}",
+								"type": "Expression"
+							},
 							"type": "String"
 						},
 						"ActivityName": {
@@ -1299,7 +1368,10 @@
 							"type": "String"
 						},
 						"LastUpdated": {
-							"value": "@{utcNow()}",
+							"value": {
+								"value": "@{utcNow()}",
+								"type": "Expression"
+							},
 							"type": "Datetime"
 						},
 						"Status": {
@@ -1307,11 +1379,17 @@
 							"type": "String"
 						},
 						"ActivityStart": {
-							"value": "@{utcNow()}",
+							"value": {
+								"value": "@{utcNow()}",
+								"type": "Expression"
+							},
 							"type": "Datetime"
 						},
 						"ActivityEnd": {
-							"value": "@{utcNow()}",
+							"value": {
+								"value": "@{utcNow()}",
+								"type": "Expression"
+							},
 							"type": "Datetime"
 						},
 						"Message": {
@@ -1349,7 +1427,10 @@
 					"storedProcedureName": "[engine].[AzurePipelineActivityLogsInsertUpdate_ZA]",
 					"storedProcedureParameters": {
 						"RunId": {
-							"value": "@{pipeline().RunId}",
+							"value": {
+								"value": "@{pipeline().RunId}",
+								"type": "Expression"
+							},
 							"type": "String"
 						},
 						"ActivityName": {
@@ -1357,7 +1438,10 @@
 							"type": "String"
 						},
 						"LastUpdated": {
-							"value": "@{utcNow()}",
+							"value": {
+								"value": "@{utcNow()}",
+								"type": "Expression"
+							},
 							"type": "Datetime"
 						},
 						"Status": {
@@ -1365,11 +1449,17 @@
 							"type": "String"
 						},
 						"ActivityStart": {
-							"value": "@{utcNow()}",
+							"value": {
+								"value": "@{utcNow()}",
+								"type": "Expression"
+							},
 							"type": "Datetime"
 						},
 						"ActivityEnd": {
-							"value": "@{utcNow()}",
+							"value": {
+								"value": "@{utcNow()}",
+								"type": "Expression"
+							},
 							"type": "Datetime"
 						},
 						"Message": {
@@ -1407,7 +1497,10 @@
 					"storedProcedureName": "[engine].[AzurePipelineActivityLogsInsertUpdate_ZA]",
 					"storedProcedureParameters": {
 						"RunId": {
-							"value": "@{pipeline().RunId}",
+							"value": {
+								"value": "@{pipeline().RunId}",
+								"type": "Expression"
+							},
 							"type": "String"
 						},
 						"ActivityName": {
@@ -1415,7 +1508,10 @@
 							"type": "String"
 						},
 						"LastUpdated": {
-							"value": "@{utcNow()}",
+							"value": {
+								"value": "@{utcNow()}",
+								"type": "Expression"
+							},
 							"type": "Datetime"
 						},
 						"Status": {
@@ -1423,11 +1519,17 @@
 							"type": "String"
 						},
 						"ActivityStart": {
-							"value": "@{utcNow()}",
+							"value": {
+								"value": "@{utcNow()}",
+								"type": "Expression"
+							},
 							"type": "Datetime"
 						},
 						"ActivityEnd": {
-							"value": "@{utcNow()}",
+							"value": {
+								"value": "@{utcNow()}",
+								"type": "Expression"
+							},
 							"type": "Datetime"
 						},
 						"Message": {
@@ -1465,7 +1567,10 @@
 					"storedProcedureName": "[engine].[AzurePipelineActivityLogsInsertUpdate_ZA]",
 					"storedProcedureParameters": {
 						"RunId": {
-							"value": "@{pipeline().RunId}",
+							"value": {
+								"value": "@{pipeline().RunId}",
+								"type": "Expression"
+							},
 							"type": "String"
 						},
 						"ActivityName": {
@@ -1473,7 +1578,10 @@
 							"type": "String"
 						},
 						"LastUpdated": {
-							"value": "@{utcNow()}",
+							"value": {
+								"value": "@{utcNow()}",
+								"type": "Expression"
+							},
 							"type": "Datetime"
 						},
 						"Status": {
@@ -1481,11 +1589,17 @@
 							"type": "String"
 						},
 						"ActivityStart": {
-							"value": "@{utcNow()}",
+							"value": {
+								"value": "@{utcNow()}",
+								"type": "Expression"
+							},
 							"type": "Datetime"
 						},
 						"ActivityEnd": {
-							"value": "@{utcNow()}",
+							"value": {
+								"value": "@{utcNow()}",
+								"type": "Expression"
+							},
 							"type": "Datetime"
 						},
 						"Message": {
@@ -1523,7 +1637,10 @@
 					"storedProcedureName": "[engine].[AzurePipelineActivityLogsInsertUpdate_ZA]",
 					"storedProcedureParameters": {
 						"RunId": {
-							"value": "@{pipeline().RunId}",
+							"value": {
+								"value": "@{pipeline().RunId}",
+								"type": "Expression"
+							},
 							"type": "String"
 						},
 						"ActivityName": {
@@ -1531,7 +1648,10 @@
 							"type": "String"
 						},
 						"LastUpdated": {
-							"value": "@{utcNow()}",
+							"value": {
+								"value": "@{utcNow()}",
+								"type": "Expression"
+							},
 							"type": "Datetime"
 						},
 						"Status": {
@@ -1539,11 +1659,17 @@
 							"type": "String"
 						},
 						"ActivityStart": {
-							"value": "@{utcNow()}",
+							"value": {
+								"value": "@{utcNow()}",
+								"type": "Expression"
+							},
 							"type": "Datetime"
 						},
 						"ActivityEnd": {
-							"value": "@{utcNow()}",
+							"value": {
+								"value": "@{utcNow()}",
+								"type": "Expression"
+							},
 							"type": "Datetime"
 						},
 						"Message": {
@@ -1581,7 +1707,10 @@
 					"storedProcedureName": "[engine].[AzurePipelineActivityLogsInsertUpdate_ZA]",
 					"storedProcedureParameters": {
 						"RunId": {
-							"value": "@{pipeline().RunId}",
+							"value": {
+								"value": "@{pipeline().RunId}",
+								"type": "Expression"
+							},
 							"type": "String"
 						},
 						"ActivityName": {
@@ -1589,7 +1718,10 @@
 							"type": "String"
 						},
 						"LastUpdated": {
-							"value": "@{utcNow()}",
+							"value": {
+								"value": "@{utcNow()}",
+								"type": "Expression"
+							},
 							"type": "Datetime"
 						},
 						"Status": {
@@ -1597,11 +1729,17 @@
 							"type": "String"
 						},
 						"ActivityStart": {
-							"value": "@{utcNow()}",
+							"value": {
+								"value": "@{utcNow()}",
+								"type": "Expression"
+							},
 							"type": "Datetime"
 						},
 						"ActivityEnd": {
-							"value": "@{utcNow()}",
+							"value": {
+								"value": "@{utcNow()}",
+								"type": "Expression"
+							},
 							"type": "Datetime"
 						},
 						"Message": {

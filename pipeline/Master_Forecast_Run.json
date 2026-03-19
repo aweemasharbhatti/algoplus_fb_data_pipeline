@@ -1923,7 +1923,10 @@
 							},
 							"PRunStart": {
 								"type": "Datetime",
-								"value": "@utcNow()"
+								"value": {
+									"value": "@variables('RunStartTime')",
+									"type": "Expression"
+								}
 							},
 							"PRunEnd": {
 								"type": "Datetime",
@@ -2012,7 +2015,7 @@
 							},
 							"PRunStart": {
 								"type": "Datetime",
-								"value": null
+								"value": "@variables('RunStartTime')"
 							},
 							"PRunEnd": {
 								"type": "Datetime",
@@ -2141,21 +2144,9 @@
 			"ConfigValues": {
 				"type": "Array"
 			},
-			"ForecastMethod": {
+			"RunStartTime": {
 				"type": "String",
-				"defaultValue": "SMA"
-			},
-			"FromWeek": {
-				"type": "String"
-			},
-			"ToWeek": {
-				"type": "String"
-			},
-			"FixLookbackWeeks": {
-				"type": "Boolean"
-			},
-			"TimePeriod": {
-				"type": "String"
+				"defaultValue": "@utcNow()"
 			}
 		},
 		"folder": {

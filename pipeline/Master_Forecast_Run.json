@@ -112,6 +112,8 @@
 			{
 				"name": "Pipeline Starts",
 				"type": "SqlServerStoredProcedure",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [],
 				"policy": {
 					"timeout": "0.12:00:00",
@@ -235,7 +237,7 @@
 				"type": "SqlServerStoredProcedure",
 				"dependsOn": [
 					{
-						"activity": "Pipeline Starts",
+						"activity": "Master Pipeline Run",
 						"dependencyConditions": [
 							"Failed"
 						]
@@ -310,7 +312,7 @@
 				"type": "Lookup",
 				"dependsOn": [
 					{
-						"activity": "Pipeline Starts",
+						"activity": "Master Pipeline Run",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -1762,6 +1764,8 @@
 			{
 				"name": "ForecastDataPipelineV2",
 				"type": "ExecutePipeline",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [
 					{
 						"activity": "InsertLog 9",
@@ -1872,6 +1876,85 @@
 						"locklookback": {
 							"value": "@string(activity('GetForecastConfigs').output.value[0].locklookback)",
 							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Master Pipeline Run",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[engine].[AzurePipelineTriggerInsertUpdate]",
+						"storedProcedureParameters": {
+							"PPipeLineTriggerId": {
+								"type": "Int32",
+								"value": "0"
+							},
+							"PRunId": {
+								"type": "String",
+								"value": "@{pipeline().RunId}"
+							},
+							"PRunGroupId": {
+								"type": "String",
+								"value": "@{pipeline().RunId}"
+							},
+							"PIsLatest": {
+								"type": "Boolean",
+								"value": "true"
+							},
+							"PPipelineName": {
+								"type": "String",
+								"value": "Master Forecast Pipeline"
+							},
+							"PLastUpdated": {
+								"type": "Datetime",
+								"value": "@utcNow()"
+							},
+							"PRunStart": {
+								"type": "Datetime",
+								"value": "@utcNow()"
+							},
+							"PRunEnd": {
+								"type": "Datetime",
+								"value": null
+							},
+							"PDurationInMs": {
+								"type": "Int32",
+								"value": null
+							},
+							"PStatus": {
+								"type": "String",
+								"value": "In Progress"
+							},
+							"PMessage": {
+								"type": "String",
+								"value": "Master Forecast Pipeline Running"
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "AzureSQLDynamic",
+						"type": "DatasetReference",
+						"parameters": {
+							"server": "sqlserver-dataplatform-general-dev.database.windows.net",
+							"schema": "engine",
+							"table": "temptb",
+							"DB": "dwh-meta-dev",
+							"User": "sqladmin",
+							"Password": "sCSmjvUoFIhEh2S"
 						}
 					}
 				}

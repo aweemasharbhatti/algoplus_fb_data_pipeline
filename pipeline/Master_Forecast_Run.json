@@ -1864,7 +1864,7 @@
 							"type": "Expression"
 						},
 						"user": {
-							"value": "@activity('GetForecastConfigs').output.value[0].UserName",
+							"value": "@activity('GetForecastConfigs').output.value[0].UserName3",
 							"type": "Expression"
 						},
 						"password": {

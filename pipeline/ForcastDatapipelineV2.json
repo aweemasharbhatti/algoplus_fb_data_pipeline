@@ -620,7 +620,92 @@
 							"User": "@pipeline().parameters.user",
 							"Password": "@pipeline().parameters.password"
 						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "Update Child Forecast Pipeline Failed",
+				"type": "Script",
+				"dependsOn": [
+					{
+						"activity": "Child Forecast Pipeline Starts",
+						"dependencyConditions": [
+							"Failed"
+						]
 					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "AzureSQLparameterizedLink",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"server": "@pipeline().parameters.servername",
+						"DB": "@pipeline().parameters.database",
+						"user": "@pipeline().parameters.user",
+						"password": "@pipeline().parameters.password"
+					}
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "Query",
+							"text": {
+								"value": "UPDATE [engine].[AzurePipelineTrigger]\nSET Status = 'FAILED',\nMessage = 'Child Forecast Pipeline Starts FAILED',\nRunEnd = GETUTCDATE()\nWHERE RunId = '@{pipeline().RunId}'",
+								"type": "Expression"
+							}
+						}
+					],
+					"scriptBlockExecutionTimeout": "02:00:00"
+				}
+			},
+			{
+				"name": "Update Forecast Manager Pipeline Failed",
+				"type": "Script",
+				"dependsOn": [
+					{
+						"activity": "Update Forecast Manager Pipeline",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "AzureSQLparameterizedLink",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"server": "@pipeline().parameters.servername",
+						"DB": "@pipeline().parameters.database",
+						"user": "@pipeline().parameters.user",
+						"password": "@pipeline().parameters.password"
+					}
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "Query",
+							"text": {
+								"value": "UPDATE [engine].[AzurePipelineTrigger]\nSET Status = 'FAILED',\nMessage = 'Update Forecast Manager Pipeline FAILED',\nRunEnd = GETUTCDATE()\nWHERE RunId = '@{pipeline().RunId}'",
+								"type": "Expression"
+							}
+						}
+					],
+					"scriptBlockExecutionTimeout": "02:00:00"
 				}
 			}
 		],

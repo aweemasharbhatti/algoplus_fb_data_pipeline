@@ -1874,6 +1874,10 @@
 						"locklookback": {
 							"value": "@string(activity('GetForecastConfigs').output.value[0].locklookback)",
 							"type": "Expression"
+						},
+						"forecastId": {
+							"value": "@activity('Generate Forecast ItemAccount and Key').output.firstRow.ForecastId",
+							"type": "Expression"
 						}
 					}
 				}

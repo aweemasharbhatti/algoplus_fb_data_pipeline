@@ -117,7 +117,7 @@
 				"type": "Copy",
 				"dependsOn": [
 					{
-						"activity": "Child Forecast Pipeline Starts",
+						"activity": "Update Forecast Manager Pipeline",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -495,11 +495,17 @@
 							},
 							"PRunId": {
 								"type": "String",
-								"value": "@{pipeline().RunId}"
+								"value": {
+									"value": "@{pipeline().RunId}",
+									"type": "Expression"
+								}
 							},
 							"PRunGroupId": {
 								"type": "String",
-								"value": "@{pipeline().RunId}"
+								"value": {
+									"value": "@{pipeline().RunId}",
+									"type": "Expression"
+								}
 							},
 							"PIsLatest": {
 								"type": "Boolean",
@@ -511,7 +517,10 @@
 							},
 							"PLastUpdated": {
 								"type": "Datetime",
-								"value": "@utcNow()"
+								"value": {
+									"value": "@utcNow()",
+									"type": "Expression"
+								}
 							},
 							"PRunStart": {
 								"type": "Datetime",
@@ -535,6 +544,66 @@
 							"PMessage": {
 								"type": "String",
 								"value": "ForcastDatapipelineV2 is Running"
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "AzureSQLDynamic",
+						"type": "DatasetReference",
+						"parameters": {
+							"server": "@pipeline().parameters.servername",
+							"schema": "engine",
+							"table": "temptb",
+							"DB": "@pipeline().parameters.database",
+							"User": "@pipeline().parameters.user",
+							"Password": "@pipeline().parameters.password"
+						}
+					}
+				}
+			},
+			{
+				"name": "Update Forecast Manager Pipeline",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "Child Forecast Pipeline Starts",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "ForecastManagerPipelineInsertUpdate",
+						"storedProcedureParameters": {
+							"PForecastId": {
+								"type": "Int32",
+								"value": {
+									"value": "@pipeline().parameters.ForecastId",
+									"type": "Expression"
+								}
+							},
+							"PPipeLineTriggerId": {
+								"type": "Int32",
+								"value": {
+									"value": "@activity('Child Forecast Pipeline Starts').output.firstRow.PipeLineTriggerId",
+									"type": "Expression"
+								}
+							},
+							"PForecastManagerPipelineId": {
+								"type": "Int32",
+								"value": "0"
 							}
 						},
 						"queryTimeout": "02:00:00",
@@ -639,6 +708,9 @@
 			},
 			"locklookback": {
 				"type": "string"
+			},
+			"ForecastId": {
+				"type": "int"
 			}
 		},
 		"folder": {

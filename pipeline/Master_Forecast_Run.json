@@ -1901,11 +1901,17 @@
 							},
 							"PRunId": {
 								"type": "String",
-								"value": "@{pipeline().RunId}"
+								"value": {
+									"value": "@{pipeline().RunId}",
+									"type": "Expression"
+								}
 							},
 							"PRunGroupId": {
 								"type": "String",
-								"value": "@{pipeline().RunId}"
+								"value": {
+									"value": "@{pipeline().RunId}",
+									"type": "Expression"
+								}
 							},
 							"PIsLatest": {
 								"type": "Boolean",
@@ -1917,7 +1923,10 @@
 							},
 							"PLastUpdated": {
 								"type": "Datetime",
-								"value": "@utcNow()"
+								"value": {
+									"value": "@utcNow()",
+									"type": "Expression"
+								}
 							},
 							"PRunStart": {
 								"type": "Datetime",
@@ -1993,11 +2002,17 @@
 							},
 							"PRunId": {
 								"type": "String",
-								"value": "@{pipeline().RunId}"
+								"value": {
+									"value": "@{pipeline().RunId}",
+									"type": "Expression"
+								}
 							},
 							"PRunGroupId": {
 								"type": "String",
-								"value": "@{pipeline().RunId}"
+								"value": {
+									"value": "@{pipeline().RunId}",
+									"type": "Expression"
+								}
 							},
 							"PIsLatest": {
 								"type": "Boolean",
@@ -2009,15 +2024,24 @@
 							},
 							"PLastUpdated": {
 								"type": "Datetime",
-								"value": "@utcNow()"
+								"value": {
+									"value": "@utcNow()",
+									"type": "Expression"
+								}
 							},
 							"PRunStart": {
 								"type": "Datetime",
-								"value": "@variables('RunStartTime')"
+								"value": {
+									"value": "@variables('RunStartTime')",
+									"type": "Expression"
+								}
 							},
 							"PRunEnd": {
 								"type": "Datetime",
-								"value": "@utcNow()"
+								"value": {
+									"value": "@utcNow()",
+									"type": "Expression"
+								}
 							},
 							"PDurationInMs": {
 								"type": "Int32",
@@ -2025,7 +2049,7 @@
 							},
 							"PStatus": {
 								"type": "String",
-								"value": "Succedded"
+								"value": "Succeeded"
 							},
 							"PMessage": {
 								"type": "String",
@@ -2082,11 +2106,17 @@
 							},
 							"PRunId": {
 								"type": "String",
-								"value": "@{pipeline().RunId}"
+								"value": {
+									"value": "@{pipeline().RunId}",
+									"type": "Expression"
+								}
 							},
 							"PRunGroupId": {
 								"type": "String",
-								"value": "@{pipeline().RunId}"
+								"value": {
+									"value": "@{pipeline().RunId}",
+									"type": "Expression"
+								}
 							},
 							"PIsLatest": {
 								"type": "Boolean",
@@ -2098,15 +2128,24 @@
 							},
 							"PLastUpdated": {
 								"type": "Datetime",
-								"value": "@utcNow()"
+								"value": {
+									"value": "@utcNow()",
+									"type": "Expression"
+								}
 							},
 							"PRunStart": {
 								"type": "Datetime",
-								"value": "@variables('RunStartTime')"
+								"value": {
+									"value": "@variables('RunStartTime')",
+									"type": "Expression"
+								}
 							},
 							"PRunEnd": {
 								"type": "Datetime",
-								"value": "@utcNow()"
+								"value": {
+									"value": "@utcNow()",
+									"type": "Expression"
+								}
 							},
 							"PDurationInMs": {
 								"type": "Int32",

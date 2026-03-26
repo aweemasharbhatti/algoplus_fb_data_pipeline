@@ -585,7 +585,7 @@
 				"typeProperties": {
 					"source": {
 						"type": "AzureSqlSource",
-						"sqlReaderStoredProcedureName": "[engine].[AzurePipelineTriggerInsertUpdate]",
+						"sqlReaderStoredProcedureName": "[engine].[ForecastManagerPipelineInsertUpdate]",
 						"storedProcedureParameters": {
 							"PForecastId": {
 								"type": "Int32",

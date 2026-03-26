@@ -709,7 +709,7 @@
 			"locklookback": {
 				"type": "string"
 			},
-			"ForecastId": {
+			"forecastId": {
 				"type": "int"
 			}
 		},

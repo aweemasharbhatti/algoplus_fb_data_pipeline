@@ -710,8 +710,7 @@
 				"type": "string"
 			},
 			"forecastId": {
-				"type": "int",
-				"defaultValue": 0
+				"type": "int"
 			}
 		},
 		"folder": {

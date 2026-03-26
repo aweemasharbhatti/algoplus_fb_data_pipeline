@@ -338,7 +338,7 @@
 						{
 							"type": "Query",
 							"text": {
-								"value": "UPDATE [engine].[AzurePipelineTrigger]\nSET Status = 'SUCCEEDED',\nMessage = 'Pipeline execution completed successfully.',\nRunEnd = GETUTCDATE()\nWHERE RunId = '@{pipeline().RunId}'",
+								"value": "UPDATE [engine].[AzurePipelineTrigger]\nSET Status = 'Succeeded',\nMessage = 'Pipeline execution completed successfully.',\nRunEnd = GETUTCDATE()\nWHERE RunId = '@{pipeline().RunId}'",
 								"type": "Expression"
 							}
 						}
